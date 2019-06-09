@@ -1,0 +1,43 @@
+div#tableDomainsList_length {
+    float: left;
+}
+
+div#tableDomainsList_paginate {
+    float: right;
+}
+
+div#tableDomainsList_filter {
+    float: right;
+}
+
+div#tableDomainsList_info {
+    float: left;
+}
+
+#tableDomainsList td:hover {
+    cursor: pointer;
+}
+
+
+
+
+
+div#tableDomainRecordsList_length {
+    float: left;
+}
+
+div#tableDomainRecordsList_paginate {
+    float: right;
+}
+
+div#tableDomainRecordsList_filter {
+    float: right;
+}
+
+div#tableDomainRecordsList_info {
+    float: left;
+}
+
+#tableDomainRecordsList td:hover {
+    cursor: pointer;
+}

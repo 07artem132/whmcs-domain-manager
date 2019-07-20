@@ -11,6 +11,7 @@ namespace WHMCS\Module\Addon\DomainManager\Configs;
 class ModuleConfig {
 	private static $defaultLanguage = 'russian';
 	private static $whmcsRootDir = ROOTDIR;
+    private static $moduleName = 'DomainManager';
 
 	/**
 	 * @return mixed
@@ -30,9 +31,7 @@ class ModuleConfig {
 	 * @return string
 	 */
 	public static function getModuleName() {
-		global $module;
-
-		return $module;
+        return self::$moduleName;
 	}
 
 	public static function getModuleLink() {

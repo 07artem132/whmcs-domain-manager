@@ -8,35 +8,61 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Configs;
 
-class ModuleConfig {
-	private static $defaultLanguage = 'russian';
-	private static $whmcsRootDir = ROOTDIR;
-    private static $moduleName = 'DomainManager';
+class ModuleConfig
+{
+    private const defaultLanguage = 'russian';
+    private const whmcsRootDir = ROOTDIR;
+    private const tempPath = self::whmcsRootDir . '/modules/addons/' . self::moduleName . '/temp';
+    private const relativePath = '/modules/addons/' . self::moduleName;
+    private const moduleName = 'DomainManager';
 
-	/**
-	 * @return mixed
-	 */
-	public static function getWhmcsRootDir() {
-		return self::$whmcsRootDir;
-	}
+    /**
+     * @return string
+     */
+    public static function geTempPath(): string
+    {
+        return self::tempPath;
+    }
 
-	/**
-	 * @return string
-	 */
-	public static function getDefaultLanguage() {
-		return self::$defaultLanguage;
-	}
+    /**
+     * @return string
+     */
+    public static function geRelativePath(): string
+    {
+        return self::relativePath;
+    }
 
-	/**
-	 * @return string
-	 */
-	public static function getModuleName() {
-        return self::$moduleName;
-	}
+    /**
+     * @return string
+     */
+    public static function getWhmcsRootDir(): string
+    {
+        return self::whmcsRootDir;
+    }
 
-	public static function getModuleLink() {
-		global $module, $customadminpath;
+    /**
+     * @return string
+     */
+    public static function getDefaultLanguage(): string
+    {
+        return self::defaultLanguage;
+    }
 
-		return '/' . $customadminpath . '/addonmodules.php?module=' . $module;
-	}
+    /**
+     * @return string
+     */
+    public static function getModuleName(): string
+    {
+        return self::moduleName;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getModuleLink(): string
+    {
+        global $module, $customadminpath;
+
+        return '/' . $customadminpath . '/addonmodules.php?module=' . $module;
+    }
 }

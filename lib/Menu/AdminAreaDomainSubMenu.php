@@ -9,8 +9,10 @@
 namespace WHMCS\Module\Addon\DomainManager\Menu;
 
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
+use WHMCS\View\Menu\MenuFactory;
 
-class AdminAreaDomainSubMenu extends \WHMCS\View\Menu\MenuFactory {
+class AdminAreaDomainSubMenu extends MenuFactory
+{
 	protected $rootItemName = "Domain Manager sub nav bar";
 
 	public function navbar() {
@@ -26,15 +28,6 @@ class AdminAreaDomainSubMenu extends \WHMCS\View\Menu\MenuFactory {
 				"order"      => 1,
 				"attributes" => [
 					"class" => ! array_key_exists( 'action', $_GET ) || $_GET['action'] === 'record_list' ? 'active' : ''
-				]
-			],
-			[
-				"name"       => "teamSpeakRecords",
-				"label"      => 'Записи TeamSpeak3',
-				"uri"        => ModuleConfig::getModuleLink() . "&action=teamspeak_record_list",
-				"order"      => 1,
-				"attributes" => [
-					"class" => ! array_key_exists( 'action', $_GET ) || $_GET['action'] === 'teamspeak_record_list' ? 'active' : ''
 				]
 			],
 		];

@@ -10,352 +10,427 @@ namespace WHMCS\Module\Addon\DomainManager\vendor\PowerDNS;
 
 use GuzzleHttp\Client as HTTPClient;
 use GuzzleHttp\Exception\RequestException;
-use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\PowerDnsClientException;
+use stdClass;
 use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\DomainEditNotMatchDomainFromUrlException;
+use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\PowerDnsClientException;
 
 
 /**
  * Class PowerDNS
  * @package Api\Services\Domain
  */
-class PowerDNS {
-	/**
-	 * @var string Адрес API сервера с PowerDNS
-	 */
-	private $url;
-	/**
-	 * @var string Ключ для работы с PowerDns
-	 */
-	private $key;
-	/**
-	 * @var string уникальный идентификатор сервера на PowerDNS
-	 */
-	private $server_id;
-	/**
-	 * @var HTTPClient Клиент для запросов к PowerDNS
-	 */
-	private $pdns_client;
-	/**
-	 * @var array Параметры/Заголовки которые передаются в месте с запросом ( HEADER)
-	 */
-	private $request_option = [];
+class PowerDNS
+{
+    /**
+     * @var string Адрес API сервера с PowerDNS
+     */
+    private $url;
+    /**
+     * @var string Ключ для работы с PowerDns
+     */
+    private $key;
+    /**
+     * @var string уникальный идентификатор сервера на PowerDNS
+     */
+    private $server_id;
+    /**
+     * @var HTTPClient Клиент для запросов к PowerDNS
+     */
+    private $pdns_client;
+    /**
+     * @var array Параметры/Заголовки которые передаются в месте с запросом ( HEADER)
+     */
+    private $request_option = [];
 
-	/**
-	 * PowerDNS constructor.
-	 */
-	function __construct( $url, $key, $server_id = 'localhost' ) {
-		$this->url       = $url;
-		$this->key       = $key;
-		$this->server_id = $server_id;
+    /**
+     * PowerDNS constructor.
+     * @param $url
+     * @param $key
+     * @param string $server_id
+     */
+    function __construct(string $url, string $key, string $server_id = 'localhost')
+    {
+        $this->url = $url;
+        $this->key = $key;
+        $this->server_id = $server_id;
 
-		$this->pdns_client = new HTTPClient( [
-			// Base URI is used with relative requests
-			'base_uri' => $this->url,
-			// You can set any number of default request options.
-			'timeout'  => 2.0,
+        $this->pdns_client = new HTTPClient([
+            'base_url' => $this->url,
+            'defaults' => [
+                'timeout' => 2,
+                'allow_redirects' => false,
+                //'proxy' => '192.168.16.1:10'
+                'headers' => [
+                    'X-API-Key' => $this->key
+                ]
+            ]
+        ]);
+    }
 
-			'headers' => [ 'X-API-Key' => $this->key ]
-		] );
-	}
+    /**
+     * Удалить домен
+     * @param string $domain домен
+     * @throws  PowerDnsClientException
+     *
+     */
+    public function DomainDelete(string $domain)
+    {
+        $this->SendHttpRequest('DELETE', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-	/**
-	 * Удалить домен
-	 * @throws  PowerDnsClientException
-	 *
-	 * @param string $domain домен
-	 */
-	public function DomainDelete( string $domain ) {
-		$this->SendHttpRequest( 'DELETE', 'servers/' . $this->server_id . '/zones/' . $domain );
+        return;
+    }
 
-		return;
-	}
+    /**
+     * @param string $key
+     * @param string $value
+     */
+    private function AddRequestOption(string $key, string $value)
+    {
+        $this->request_option[$key] = $value;
 
-	/**
-	 * @param string $key
-	 * @param string $value
-	 */
-	private function AddRequestOption( string $key, string $value ) {
-		$this->request_option[ $key ] = $value;
+        return;
+    }
 
-		return;
-	}
+    /**
+     * @param string $domain изменяемый домен
+     * @param string $name Полное доменное имя (включая суб домен)
+     * @param string $type тип записи
+     * @param int $ttl ttl записи
+     * @param array $records Содержимое записи
+     *
+     * @throws PowerDnsClientException
+     * @throws DomainEditNotMatchDomainFromUrlException
+     */
+    public function DomainRecordCreate(string $domain, string $name, string $type, int $ttl, array $records): void
+    {
+        $this->VerifiEditDomain($domain, $name);
 
-	/**
-	 * @param string $domain изменяемый домен
-	 * @param string $name Полное доменное имя (включая суб домен)
-	 * @param string $type тип записи
-	 * @param int $ttl ttl записи
-	 * @param array $records Содержимое записи
-	 *
-	 * @throws DomainEditNotMatchDomainFromUrlException
-	 * @throws PowerDnsClientException
-	 * @return string закодированные данные в json
-	 */
-	public function DomainRecordCreate( string $domain, string $name, string $type, int $ttl, array $records ) {
-		$this->VerifiEditDomain( $domain, $name );
+        $this->AddRequestOption('body', $this->BildJsonRecordCreateOrEdit($name, $type, $ttl, $records));
 
-		$this->AddRequestOption( 'body', $this->BildJsonRecordCreateOrEdit( $name, $type, $ttl, $records ) );
+        $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-		$this->SendHttpRequest( 'PATCH', 'servers/' . $this->server_id . '/zones/' . $domain );
+        return;
+    }
 
-		return;
-	}
+    public function DomainRecordsCreate(string $domain, array $records): void
+    {
 
-	/**
-	 * @param string $domain Домен из url
-	 * @param string $name полная запись которую хотят изменить
-	 *
-	 * @throws DomainEditNotMatchDomainFromUrlException Возникает в том случае если домен из URL не совпадает с доменом в записи которую необходимо изменить.
-	 */
-	private function VerifiEditDomain( string $domain, string $name ) {
-		$re = '/(' . quotemeta( $domain ) . '\.)$/';
+        $this->AddRequestOption('body', $this->BildJsonRecordsCreateOrEdit($records));
 
-		preg_match( $re, $name, $matches, PREG_OFFSET_CAPTURE, 0 );
+        $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-		if ( empty( $matches ) ) {
-			throw new DomainEditNotMatchDomainFromUrlException( $domain, $name );
-		}
+        return;
+    }
 
-		return;
-	}
+    /**
+     * @param string $domain Домен из url
+     * @param string $name полная запись которую хотят изменить
+     *
+     * @throws DomainEditNotMatchDomainFromUrlException Возникает в том случае если домен из URL не совпадает с доменом в записи которую необходимо изменить.
+     */
+    private function VerifiEditDomain(string $domain, string $name)
+    {
+        $re = '/(' . quotemeta($domain) . '\.)$/';
+        preg_match($re, $name, $matches, PREG_OFFSET_CAPTURE, 0);
 
-	/**
-	 * @param string $domain изменяемый домен
-	 * @param string $name Полное доменное имя (включая суб домен)
-	 * @param string $type тип записи
-	 * @param int $ttl ttl записи
-	 * @param array $records Содержимое записи
-	 *
-	 * @throws PowerDnsClientException
-	 * @throws DomainEditNotMatchDomainFromUrlException
-	 * @return string закодированные данные в json
-	 */
-	public function DomainRecordDelete( string $domain, string $name, string $type, int $ttl, array $records ) {
-		$this->VerifiEditDomain( $domain, $name );
+        if (empty($matches)) {
+            throw new DomainEditNotMatchDomainFromUrlException($domain, $name);
+        }
 
-		$this->AddRequestOption( 'body', $this->BildJsonRecordDelete( $name, $type, $ttl, $records ) );
+        return;
+    }
 
-		$this->SendHttpRequest( 'PATCH', 'servers/' . $this->server_id . '/zones/' . $domain );
+    /**
+     * @param string $domain изменяемый домен
+     * @param string $name Полное доменное имя (включая суб домен)
+     * @param string $type тип записи
+     * @param int $ttl ttl записи
+     * @param array $records Содержимое записи
+     *
+     * @return string закодированные данные в json
+     * @throws DomainEditNotMatchDomainFromUrlException
+     * @throws PowerDnsClientException
+     */
+    public function DomainRecordDelete(string $domain, string $name, string $type, int $ttl, array $records)
+    {
+        $this->VerifiEditDomain($domain, $name);
 
-		return;
-	}
+        $this->AddRequestOption('body', $this->BildJsonRecordDelete($name, $type, $ttl, $records));
 
-	/**
-	 * @param string $name Полное доменное имя (включая суб домен)
-	 * @param string $type тип записи
-	 * @param int $ttl ttl записи
-	 * @param array $records Содержимое записи
-	 *
-	 * @return string закодированные данные в json
-	 */
-	private function BildJsonRecordCreateOrEdit( string $name, string $type, int $ttl, array $records ): string {
-		$array['rrsets'][0]['name']       = $name;
-		$array['rrsets'][0]['type']       = $type;
-		$array['rrsets'][0]['ttl']        = $ttl;
-		$array['rrsets'][0]['changetype'] = 'REPLACE';
-		$array['rrsets'][0]['records']    = $records;
+        $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-		return json_encode( $array );
-	}
+        return;
+    }
 
-	/**
-	 * @param string $name Полное доменное имя (включая суб домен)
-	 * @param string $type тип записи
-	 * @param int $ttl ttl записи
-	 * @param array $records Содержимое записи
-	 *
-	 * @return string закодированные данные в json
-	 */
-	private function BildJsonRecordDelete( string $name, string $type, int $ttl, array $records ): string {
-		$array['rrsets'][0]['name']       = $name;
-		$array['rrsets'][0]['type']       = $type;
-		$array['rrsets'][0]['ttl']        = $ttl;
-		$array['rrsets'][0]['changetype'] = 'DELETE';
-		$array['rrsets'][0]['records']    = $records;
+    public function DomainRecordsDelete(string $domain, array $records)
+    {
 
-		return json_encode( $array );
-	}
+        $this->AddRequestOption('body', $this->BildJsonRecordsDelete($records));
 
-	/**
-	 * @param string $domain Домен
-	 * @param string $kind Тип домена (мастер/слейв/натив)
-	 * @param array $nameservers Массив с нейм серверами
-	 *
-	 * @return string закодированные данные в json
-	 */
-	private function BildJsonDomainCreate( string $domain, string $kind, array $nameservers ): string {
-		$array['name']        = $domain;
-		$array['kind']        = $kind;
-		$array['nameservers'] = $nameservers;
+        $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-		return json_encode( $array );
-	}
+        return;
+    }
 
-	/**
-	 * @param string $domain Домен
-	 * @param string $kind Тип домена (мастер/слейв/натив)
-	 * @param array $nameservers Массив с нейм серверами
-	 *
-	 * @throws  PowerDnsClientException
-	 * @return \stdClass
-	 */
-	public function DomainCreate( string $domain, string $kind, array $nameservers ): \stdClass {
-		$this->AddRequestOption( 'body', $this->BildJsonDomainCreate( $domain, $kind, $nameservers ) );
+    /**
+     * @param string $name Полное доменное имя (включая суб домен)
+     * @param string $type тип записи
+     * @param int $ttl ttl записи
+     * @param array $records Содержимое записи
+     *
+     * @return string закодированные данные в json
+     */
+    private function BildJsonRecordCreateOrEdit(string $name, string $type, int $ttl, array $records): string
+    {
+        $array['rrsets'][0]['name'] = idn_to_ascii($name);
+        $array['rrsets'][0]['type'] = $type;
+        $array['rrsets'][0]['ttl'] = $ttl;
+        $array['rrsets'][0]['changetype'] = 'REPLACE';
+        $array['rrsets'][0]['records'] = $records;
+        return json_encode($array);
+    }
 
-		$Response = $this->SendHttpRequest( 'POST', 'servers/' . $this->server_id . '/zones' );
+    private function BildJsonRecordsCreateOrEdit(array $records): string
+    {
+        $array['rrsets'] = $records;
 
-		unset( $Response->url );
-		unset( $Response->account );
+        foreach ($array['rrsets'] as &$rrset) {
+            $rrset['name'] = idn_to_ascii($rrset['name']);
+            $rrset['changetype'] = 'REPLACE';
+        }
+        return json_encode($array);
+    }
 
-		return $Response;
-	}
+    /**
+     * @param string $name Полное доменное имя (включая суб домен)
+     * @param string $type тип записи
+     * @param int $ttl ttl записи
+     * @param array $records Содержимое записи
+     *
+     * @return string закодированные данные в json
+     */
+    private function BildJsonRecordDelete(string $name, string $type, int $ttl, array $records): string
+    {
+        $array['rrsets'][0]['name'] = idn_to_ascii($name);
+        $array['rrsets'][0]['type'] = $type;
+        $array['rrsets'][0]['ttl'] = $ttl;
+        $array['rrsets'][0]['changetype'] = 'DELETE';
+        $array['rrsets'][0]['records'] = $records;
 
-	/**
-	 * @param string $domain доменное имя
-	 *
-	 * @throws  PowerDnsClientException
-	 * @return array Список записей домена
-	 */
-	public function DomainRecordList( string $domain ): array {
-		$Response = $this->SendHttpRequest( 'GET', 'servers/' . $this->server_id . '/zones/' . $domain );
+        return json_encode($array);
+    }
 
-		for ( $i = 0; $i < count( $Response->rrsets ); $i ++ ) {
-			$DomainRecordList[] = [
-				'type'     => $Response->rrsets[ $i ]->type,
-				'name'     => $Response->rrsets[ $i ]->name,
-				'records'  => $Response->rrsets[ $i ]->records,
-				'ttl'      => $Response->rrsets[ $i ]->ttl,
-				'comments' => $Response->rrsets[ $i ]->comments,
-			];
-		}
+    private function BildJsonRecordsDelete(array $records): string
+    {
+        $array['rrsets'] = $records;
 
-		return $DomainRecordList;
+        for ($i = 0; $i < count($records); $i++) {
+            if ($array['rrsets'][$i]['type'] == 'SOA' || $array['rrsets'][$i]['type'] == 'NS') {
+                unset($array['rrsets'][$i]);
+                continue;
+            }
+            $array['rrsets'][$i]['name'] = idn_to_ascii($array['rrsets'][$i]['name']);
+            $array['rrsets'][$i]['changetype'] = 'DELETE';
+        }
 
-	}
+        return json_encode($array);
+    }
 
-	/**
-	 * @param string $domain
-	 *
-	 * @throws PowerDnsClientException
-	 * @return array
-	 */
-	public function DomainRecordFormatedList( string $domain ): array {
-		$Response = $this->SendHttpRequest( 'GET', 'servers/' . $this->server_id . '/zones/' . $domain );
+    /**
+     * @param string $domain Домен
+     * @param string $kind Тип домена (мастер/слейв/натив)
+     * @param array $nameservers Массив с нейм серверами
+     *
+     * @return string закодированные данные в json
+     */
+    private function BildJsonDomainCreate(string $domain, string $kind, array $nameservers): string
+    {
+        $array['name'] = idn_to_ascii($domain);
+        $array['kind'] = $kind;
+        $array['nameservers'] = $nameservers;
 
-		for ( $i = 0; $i < count( $Response->rrsets ); $i ++ ) {
-			$DomainRecordList[ $Response->rrsets[ $i ]->type ][] = [
-				'name'     => $Response->rrsets[ $i ]->name,
-				'records'  => $this->RecordsContentFormated( (string) $Response->rrsets[ $i ]->type, (array) $Response->rrsets[ $i ]->records ),
-				'ttl'      => $Response->rrsets[ $i ]->ttl,
-				'comments' => $Response->rrsets[ $i ]->comments,
-			];
-		}
+        return json_encode($array);
+    }
 
-		return $DomainRecordList;
-	}
+    /**
+     * @param string $domain Домен
+     * @param string $kind Тип домена (мастер/слейв/натив)
+     * @param array $nameservers Массив с нейм серверами
+     *
+     * @return stdClass
+     * @throws  PowerDnsClientException
+     */
+    public function DomainCreate(string $domain, string $kind, array $nameservers): stdClass
+    {
+        $this->AddRequestOption('body', $this->BildJsonDomainCreate($domain, $kind, $nameservers));
 
-	/**
-	 * @param string $Type Тип записи
-	 * @param array $Records Содержимое записи
-	 *
-	 * @return array
-	 */
-	private function RecordsContentFormated( string $Type, array $Records ): array {
-		switch ( $Type ) {
-			case 'SRV';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$result                     = explode( " ", $Records[ $i ]->content );
-					$formated[ $i ]['Priority'] = $result[0];
-					$formated[ $i ]['Weight']   = $result[1];
-					$formated[ $i ]['Port']     = $result[2];
-					$formated[ $i ]['Target']   = $result[3];
-					$formated[ $i ]['disabled'] = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'A';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['ipv4']     = $Records[ $i ]->content;
-					$formated[ $i ]['disabled'] = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'AAAA';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['ipv6']     = $Records[ $i ]->content;
-					$formated[ $i ]['disabled'] = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'CNAME';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['CanonicalName'] = $Records[ $i ]->content;
-					$formated[ $i ]['disabled']      = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'NS';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['NameServer'] = $Records[ $i ]->content;
-					$formated[ $i ]['disabled']   = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'MX';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$result                      = explode( " ", $Records[ $i ]->content );
-					$formated[ $i ]['Priority']  = $result[0];
-					$formated[ $i ]['MailRelay'] = $result[1];
-					$formated[ $i ]['disabled']  = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'PTR';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['HostName'] = $Records[ $i ]->content;
-					$formated[ $i ]['disabled'] = $Records[ $i ]->disabled;
-				}
-				break;
-			case 'TXT';
-				for ( $i = 0; $i < count( $Records ); $i ++ ) {
-					$formated[ $i ]['Text']     = $Records[ $i ]->content;
-					$formated[ $i ]['disabled'] = $Records[ $i ]->disabled;
-				}
-				break;
+        $Response = $this->SendHttpRequest('POST', 'servers/' . $this->server_id . '/zones');
 
-			default;
-				$formated = $Records;
-		}
+        unset($Response->url);
+        unset($Response->account);
 
-		return $formated;
-	}
+        return $Response;
+    }
 
-	/**
-	 * @return array
-	 * @throws PowerDnsClientException
-	 */
-	public function DomainList(): \stdClass {
-		$Response = $this->SendHttpRequest( 'GET', 'servers/' . $this->server_id . '/zones' );
+    /**
+     * @param string $domain доменное имя
+     *
+     * @return array Список записей домена
+     * @throws  PowerDnsClientException
+     */
+    public function DomainRecordList(string $domain): array
+    {
+        $Response = $this->SendHttpRequest('GET', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
 
-		foreach ( $Response as &$item ) {
-			unset( $item->account );
-			unset( $item->url );
-		}
+        for ($i = 0; $i < count($Response->rrsets); $i++) {
 
-		return $Response;
-	}
+            $DomainRecordList[] = [
+                'type' => $Response->rrsets[$i]->type,
+                'name' => idn_to_utf8($Response->rrsets[$i]->name),
+                'records' => $Response->rrsets[$i]->records,
+                'ttl' => $Response->rrsets[$i]->ttl,
+                'comments' => $Response->rrsets[$i]->comments,
+            ];
+        }
 
-	/**
-	 * @param string $Method Метод запроса
-	 * @param string $Url URL к которому необходимо выполнить запрос
-	 *
-	 * @return mixed Декодированный из json'a ответ
-	 * @throws PowerDnsClientException
-	 */
-	private function SendHttpRequest( string $Method, string $Url ): \stdClass {
-		try {
-			$res = $this->pdns_client->request( $Method, $Url, $this->request_option );
-		} catch ( RequestException $e ) {
-			throw new PowerDnsClientException( $e->getResponse()->getBody( true ) );
-		}
+        return $DomainRecordList;
 
-		$return = (object) json_decode( $res->getBody()->getContents() );
+    }
 
-		return $return;
-	}
+    /**
+     * @param string $domain
+     *
+     * @return array
+     * @throws PowerDnsClientException
+     */
+    public function DomainRecordFormatedList(string $domain): array
+    {
+        $Response = $this->SendHttpRequest('GET', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
+
+        for ($i = 0; $i < count($Response->rrsets); $i++) {
+            $DomainRecordList[$Response->rrsets[$i]->type][] = [
+                'name' => idn_to_utf8($Response->rrsets[$i]->name),
+                'records' => (array)$Response->rrsets[$i]->records,
+                'ttl' => $Response->rrsets[$i]->ttl,
+                'comments' => $Response->rrsets[$i]->comments,
+            ];
+        }
+
+        return $DomainRecordList;
+    }
+
+    /**
+     * @param string $Type Тип записи
+     * @param array $Records Содержимое записи
+     *
+     * @return array
+     */
+    private function RecordsContentFormated(string $Type, array $Records): array
+    {
+        switch ($Type) {
+            case 'SRV';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $result = explode(" ", $Records[$i]->content);
+                    $formated[$i]['Priority'] = $result[0];
+                    $formated[$i]['Weight'] = $result[1];
+                    $formated[$i]['Port'] = $result[2];
+                    $formated[$i]['Target'] = $result[3];
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'A';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['ipv4'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'AAAA';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['ipv6'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'CNAME';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['CanonicalName'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'NS';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['NameServer'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'MX';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $result = explode(" ", $Records[$i]->content);
+                    $formated[$i]['Priority'] = $result[0];
+                    $formated[$i]['MailRelay'] = $result[1];
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'PTR';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['HostName'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+            case 'TXT';
+                for ($i = 0; $i < count($Records); $i++) {
+                    $formated[$i]['Text'] = $Records[$i]->content;
+                    $formated[$i]['disabled'] = $Records[$i]->disabled;
+                }
+                break;
+
+            default;
+                $formated = $Records;
+        }
+
+        return $formated;
+    }
+
+    /**
+     * @return array
+     * @throws PowerDnsClientException
+     */
+    public function DomainList(): stdClass
+    {
+        $Response = $this->SendHttpRequest('GET', 'servers/' . $this->server_id . '/zones');
+
+        foreach ($Response as &$item) {
+            $item->id = idn_to_utf8($item->id);
+            $item->name = idn_to_utf8($item->name);
+            unset($item->account);
+            unset($item->url);
+        }
+
+        return $Response;
+    }
+
+    /**
+     * @param string $Method Метод запроса
+     * @param string $Url URL к которому необходимо выполнить запрос
+     *
+     * @return mixed Декодированный из json'a ответ
+     * @throws PowerDnsClientException
+     */
+    private function SendHttpRequest(string $Method, string $Url): stdClass
+    {
+        try {
+            $res = $this->pdns_client->{strtolower($Method)}($Url, $this->request_option);
+        } catch (RequestException $e) {
+            $response = $e->getResponse();
+            if (empty($response)) {
+                throw new PowerDnsClientException($e->getMessage());
+            } else {
+                throw new PowerDnsClientException($response->getBody());
+            }
+        }
+
+        $return = (object)json_decode($res->getBody()->getContents());
+
+        return $return;
+    }
 
 }

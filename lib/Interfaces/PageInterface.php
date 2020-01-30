@@ -8,16 +8,27 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Interfaces;
 
-interface  PageInterface {
-	/**
-	 * @return string
-	 */
-	public function getTemplateName();
+use WHMCS\View\Menu\MenuFactory;
 
-	/**
-	 * @return array
-	 */
-	public function getVars();
+interface  PageInterface
+{
+    /**
+     * @return string
+     */
+    public function getTemplateName(): string;
 
-	public function getSubMenu();
+    /**
+     * @return array
+     */
+    public function getVars(): array;
+
+    /**
+     * @return MenuFactory|null
+     */
+    public function getSubMenu(): ?MenuFactory;
+
+    /**
+     * @return array
+     */
+    public function getBreadcrumb(): array;
 }

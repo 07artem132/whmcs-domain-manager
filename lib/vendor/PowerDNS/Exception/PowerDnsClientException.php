@@ -8,12 +8,15 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception;
 
-class PowerDnsClientException extends \Exception {
-	public $response;
+use Exception;
 
-	public function __construct( string $Response ) {
-		$this->response = $Response;
-		parent::__construct();
-	}
+class PowerDnsClientException extends Exception
+{
+    public $response;
 
+    public function __construct(string $Response)
+    {
+        $this->response = $Response;
+        parent::__construct($this->response);
+    }
 }

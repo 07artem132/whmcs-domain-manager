@@ -2,112 +2,152 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Controllers;
 
-use WHMCS\Module\Addon\DomainManager\Configs\SmartyConfig;
+use Exception;
+use Smarty;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
+use WHMCS\Module\Addon\DomainManager\Configs\SmartyConfig;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
+use WHMCS\View\Menu\MenuFactory;
 
-class PageController {
-	/**
-	 * @var \Smarty
-	 */
-	private $view;
-	/**
-	 * @var string
-	 */
-	private $action = '';
-	/**
-	 * @var  \WHMCS\View\Menu\MenuFactory
-	 */
-	private $menu;
-	/**
-	 * @var  \WHMCS\View\Menu\MenuFactory
-	 */
-	private $sub_menu;
+class PageController
+{
+    /**
+     * @var Smarty
+     */
+    private $view;
+    /**
+     * @var string
+     */
+    private $action = '';
+    /**
+     * @var  MenuFactory
+     */
+    private $menu;
+    /**
+     * @var  MenuFactory
+     */
+    private $sub_menu;
+    /**
+     * @var  array
+     */
+    private $breadcrumb;
 
-	/**
-	 * @var string
-	 */
-	private $menu_template = '';
-	/**
-	 * @var string
-	 */
-	private $suffix = '';
+    /**
+     * @var string
+     */
+    private $menu_template = '';
+    /**
+     * @var string
+     */
+    private $breadcrumb_template = '';
+    /**
+     * @var string
+     */
+    private $suffix = '';
 
-	public function __construct( $vars = array() ) {
-		global $customadminpath, $CONFIG;
+    public function __construct($vars = array())
+    {
+        global $customadminpath, $CONFIG;
 
-		$this->view = new \Smarty();
-		$this->view->setTemplateDir( SmartyConfig::GetTemplateDir() );
-		$this->view->setCompileDir( SmartyConfig::GetCompileDir() );
-		$this->view->assign( '_CONFIG', $CONFIG );
-		$this->view->assign( 'LANG', $vars['_lang'] );
-		$this->view->assign( 'csrfToken', generate_token( 'plain' ) );
+        $this->view = new Smarty();
+        $this->view->setTemplateDir(SmartyConfig::GetTemplateDir());
+        $this->view->setCompileDir(SmartyConfig::GetCompileDir());
+        $this->view->assign('_CONFIG', $CONFIG);
 
-		$this->view->assign( 'vars', $vars );
-		$this->view->assign( 'customadminpath', $customadminpath );
-		$this->view->assign( 'modulelink', ModuleConfig::getModuleLink() );
-	}
+        if (array_key_exists('_lang', $vars))
+            $this->view->assign('LANG', $vars['_lang']);
 
-	public function setDefaultAction( $action ) {
-		$this->action = $action;
-	}
+        $this->view->assign('csrfToken', generate_token('plain'));
 
-	public function setMenuTemplate( $template ) {
-		$this->menu_template = $template;
-	}
+        $this->view->assign('vars', $vars);
+        $this->view->assign('customadminpath', $customadminpath);
+        $this->view->assign('modulelink', ModuleConfig::getModuleLink());
+    }
 
-	public function setSuffixTemplate( $suffix ) {
-		$this->suffix = $suffix;
-	}
+    public function setDefaultAction($action)
+    {
+        $this->action = $action;
+    }
 
-	public function setMenu( $menu ) {
-		$this->menu = $menu;
-	}
+    public function setMenuTemplate($template)
+    {
+        $this->menu_template = $template;
+    }
 
-	private function getAction() {
-		return isset( $_REQUEST['action'] ) && ! empty( $_REQUEST['action'] ) ? $_REQUEST['action'] : $this->action;
-	}
+    public function setBreadcrumbTemplate($template)
+    {
+        $this->breadcrumb_template = $template;
+    }
 
-	public function run() {
-		$this->view->assign( 'navbar', $this->menu );
-		$this->displayMenu();
+    public function setSuffixTemplate($suffix)
+    {
+        $this->suffix = $suffix;
+    }
 
-		$ClassName     = ucfirst( $this->suffix ) . implode( array_map( 'ucfirst', array_map( 'strtolower', explode( '_', $this->getAction() ) ) ) ) . 'Page';
-		$ClassNameFull = 'WHMCS\\Module\\Addon\\DomainManager\\Pages\\' . $ClassName;
-		try {
-			/**
-			 * @var $class PageInterface
-			 */
-			$class = new $ClassNameFull( $this );
+    public function setMenu($menu)
+    {
+        $this->menu = $menu;
+    }
 
-			if ( empty( $class ) ) {
-				throw new \Exception( 'Page not Found' );
-			}
+    private function getAction()
+    {
+        return isset($_REQUEST['action']) && !empty($_REQUEST['action']) ? $_REQUEST['action'] : $this->action;
+    }
 
-			foreach ( $class->getVars() as $key => $var ) {
-				$this->view->assign( $key, $var );
-			}
+    public function run()
+    {
+        $this->view->assign('navbar', $this->menu);
+        $this->displayMenu();
 
-			$this->sub_menu = $class->getSubMenu();
+        $ClassName = ucfirst($this->suffix) . implode(array_map('ucfirst', array_map('strtolower', explode('_', $this->getAction())))) . 'Page';
+        $ClassNameFull = 'WHMCS\\Module\\Addon\\DomainManager\\Pages\\' . $ClassName;
+        try {
+            /**
+             * @var $class PageInterface
+             */
+            $class = new $ClassNameFull($this);
 
-			if ( ! empty( $this->sub_menu ) ) {
-				$this->view->assign( 'navbar', $this->sub_menu );
-				$this->displaySubMenu();
-			}
+            if (empty($class)) {
+                throw new Exception('Page not Found');
+            }
 
-			echo $this->view->fetch( $class->getTemplateName() );
-		} catch ( \Exception $e ) {
-			echo $e->getMessage();
-		}
-	}
+            foreach ($class->getVars() as $key => $var) {
+                $this->view->assign($key, $var);
+            }
 
-	private function displayMenu() {
-		echo $this->view->fetch( $this->menu_template );
-	}
+            $this->sub_menu = $class->getSubMenu();
 
-	private function displaySubMenu() {
-		echo $this->view->fetch( $this->menu_template );
-	}
+            if (!empty($this->sub_menu)) {
+                $this->view->assign('navbar', $this->sub_menu);
+                $this->displaySubMenu();
+            }
+
+            $this->breadcrumb = $class->getBreadcrumb();
+            if (!empty($this->breadcrumb)) {
+                $this->view->assign('breadcrumb', $this->breadcrumb);
+                $this->displayBreadcrumb();
+            }
+
+            echo $this->view->fetch($class->getTemplateName());
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    private function displayMenu()
+    {
+        echo $this->view->fetch($this->menu_template);
+    }
+
+    private function displaySubMenu()
+    {
+        echo $this->view->fetch($this->menu_template);
+    }
+
+    private function displayBreadcrumb()
+    {
+        echo $this->view->fetch($this->breadcrumb_template);
+    }
 
 
 }

@@ -8,14 +8,15 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Controllers;
 
-use \WHMCS\Database\Capsule;
+use Exception;
+use WHMCS\Database\Capsule;
 
 class UninstallController {
 
 	public static function dropTable( $tableName ) {
 		try {
-//			Capsule::schema()->dropIfExists( $tableName );
-		} catch ( \Exception $e ) {
+            Capsule::schema()->dropIfExists($tableName);
+        } catch (Exception $e) {
 			return array(
 				'status'      => 'error',
 				'description' => sprintf( LanguageController::trans( 'errorDropTable' ), $tableName, $e->getMessage() )

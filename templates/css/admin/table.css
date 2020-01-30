@@ -41,3 +41,72 @@ div#tableDomainRecordsList_info {
 #tableDomainRecordsList td:hover {
     cursor: pointer;
 }
+
+
+div#tableLogsList_length {
+    float: left;
+}
+
+div#tableLogsList_paginate {
+    float: right;
+}
+
+div#tableLogsList_filter {
+    float: right;
+}
+
+div#tableLogsList_info {
+    float: left;
+}
+
+
+div#tableServersList_length {
+    float: left;
+}
+
+div#tableServersList_paginate {
+    float: right;
+}
+
+div#tableServersList_filter {
+    float: right;
+}
+
+div#tableServersList_info {
+    float: left;
+}
+
+
+div#tableDomainsBlackList_length {
+    float: left;
+}
+
+div#tableDomainsBlackList_paginate {
+    float: right;
+}
+
+div#tableDomainsBlackList_filter {
+    float: right;
+}
+
+div#tableDomainsBlackList_info {
+    float: left;
+}
+
+
+div#tablePackage_length {
+    float: left;
+}
+
+div#tablePackage_paginate {
+    float: right;
+}
+
+div#tablePackage_filter {
+    float: right;
+}
+
+div#tablePackage_info {
+    float: left;
+}
+

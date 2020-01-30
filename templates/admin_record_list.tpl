@@ -1,37 +1,16 @@
 <div class="col-md-12">
-    <div class="col-md-7">
-        <p>
-            <strong>Записи домена:</strong>
-            {$smarty.get.domain}
-        </p>
-    </div>
-    <div class="col-md-5">
-        <div class="text-right">
-            <!-- Split button -->
-            <div class="btn-group">
+    <div class="text-right">
+        <!-- Split button -->
+        <div class="btn-group" style="margin-right: 4px;">
 				<span data-toggle="modal" data-target="#dialog_addRecord">
-                    <button type="button" class="btn btn-success btn-sm" data-toggle="tooltip" data-placement="bottom"
-                            title="Добавить запись">
-                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                        Добавить запись
-                    </button>
-                    <button type="button" class="btn btn-warning btn-sm" data-toggle="tooltip" data-placement="bottom"
-                            title="Загрузить записи">
-                        <span class="glyphicon glyphicon-import" aria-hidden="true"></span>
-                        Загрузить записи
-                    </button>
-                    <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" data-placement="bottom"
-                            title="Выгрузить записи">
-                        <span class="glyphicon glyphicon-export" aria-hidden="true"></span>
-                        Выгрузить записи
-                    </button>
-                    <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" data-placement="bottom"
-                            title="Удалить домен">
-                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                        Удалить домен
-                    </button>
+                   <form role="form" method="get" style="display: inline;">
+                    <input type="hidden" name="module" value="DomainManager">
+                    <input type="hidden" name="domain" value="{$smarty.get.domain}">
+                    <input type="hidden" name="server_id" value="{$smarty.get.server_id}">
+                    <input type="hidden" name="action" value="domain_add_record">
+                    <input type="submit" class="btn btn-success btn-sm" value="Добавить запись">
+                </form>
 				</span>
-            </div>
         </div>
     </div>
 </div>
@@ -41,7 +20,6 @@
         <table id="tableDomainRecordsList" width="100%" class="datatable no-margin">
             <thead>
             <tr>
-                <th style="width: 2%;"></th>
                 <th>Имя</th>
                 <th>Тип</th>
                 <th>Запись</th>
@@ -53,12 +31,9 @@
             <tbody>
             {foreach  from=$recordList item=record name=recordLoop}
                 <tr>
-                    <td><input type="checkbox"
-                               name="{$record['name']}_{$record['type']}_{$record['ttl']}_{','|implode:$record['records']}">
-                    </td>
                     <td>{$record['name']}</td>
                     <td>{$record['type']}</td>
-                    <td>
+                    <td style="word-break: break-all;">
                         {foreach from=$record['records'] item=record name=contentLoop}
                             {$record->content}
                             <br/>
@@ -66,15 +41,16 @@
                     </td>
                     <td>{$record['ttl']}</td>
                     <td>
-                        <a href="{$modulelink}&action=record_list&domain={$domain->name|substr:0:-1}">
+                        <a href="addonmodules.php?module=DomainManager&domain={$smarty.get.domain}&server_id={$smarty.get.server_id}&type={$record['type']}&name={$record['name']}&action=domain_edit_record">
                             <img src="images/edit.gif" border="0">
                         </a>
                     </td>
                     <td>
-                        <a href="#">
+                        <a href="addonmodules.php?module=DomainManager&domain={$smarty.get.domain}&server_id={$smarty.get.server_id}&type={$record['type']}&name={$record['name']}&action=domain_delete_record">
                             <img src="images/delete.gif" width="16" height="16" border="0">
                         </a>
-                    </td>                </tr>
+                    </td>
+                </tr>
             {/foreach}
             </tbody>
         </table>

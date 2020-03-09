@@ -74,7 +74,9 @@
                     </td>
                     <td>
                         <a href="addonmodules.php?module=DomainManager&action=delete_server&id={$server.id}"
-                           title="Удалить сервер">
+                           title="Удалить сервер"
+                           onClick="return window.confirm('Вы точно хотите удалить сервер  {$server.name} ?');"
+                        >
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>

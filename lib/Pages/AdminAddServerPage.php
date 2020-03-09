@@ -9,6 +9,7 @@
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use Throwable;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -27,6 +28,7 @@ class AdminAddServerPage implements PageInterface
             $this->vars['ns'] = $_GET['ns'];
             $this->vars['token'] = $_GET['token'];
             $this->vars['ip'] = $_GET['ip'];
+            $this->vars['port'] = $_GET['port'];
             $this->vars['name'] = $_GET['name'];
             $this->vars['name'] = $_GET['name'];
             $this->vars['error'] = $_GET['error'];
@@ -34,16 +36,19 @@ class AdminAddServerPage implements PageInterface
 
         if ($this->isRequestMethod('POST')) {
             try {
-                $pdns = new PowerDNS('http://' . $_POST['ip'] . '/api/v1/', $_POST['token']);
+                $pdns = new PowerDNS('http://' . $_POST['ip'] . ':' . $_POST['port'] . '/api/v1/', $_POST['token']);
                 $pdns->DomainList();
                 $server = new ServerModel();
                 $server->name = $_POST['server_name'];
                 $server->ip = $_POST['ip'];
+                $server->port = $_POST['port'];
                 $server->token = $_POST['token'];
                 $server->status = 1;
                 $server->ns_list = explode("\r\n", $_POST['ns']);
                 $server->saveOrFail();
+                LogController::addSuccess(__CLASS__, 'Добавление сервера, adminid->' . $_SESSION['adminid']);
             } catch (Throwable $e) {
+                LogController::addError(__CLASS__, 'Добавление сервера, adminid->' . $_SESSION['adminid'], $e);
                 redir('module=DomainManager&action=add_server&ns=' . $_POST['ns'] . '&token=' . $_POST['token'] . '&ip=' . $_POST['ip'] . '&name=' . $_POST['server_name'] . '&connect=none&error=' . $e->getMessage(), 'addonmodules.php');
             }
             redir('module=DomainManager&action=servers', 'addonmodules.php');

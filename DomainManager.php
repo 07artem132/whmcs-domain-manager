@@ -11,14 +11,18 @@ error_reporting(-1);
 ini_set("display_errors", 1);
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use WHMCS\Database\Capsule;
+use WHMCS\Domain\Domain;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\InstallController;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Controllers\PageController;
 use WHMCS\Module\Addon\DomainManager\Controllers\UninstallController;
 use WHMCS\Module\Addon\DomainManager\Menu\AdminAreaMenu;
 use WHMCS\Module\Addon\DomainManager\Models\BlackListModel;
 use WHMCS\Module\Addon\DomainManager\Models\DomainPackage;
 use WHMCS\Module\Addon\DomainManager\Models\PackageModel;
+use WHMCS\Module\Addon\DomainManager\Models\PackageRelative;
 use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
 use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\DomainEditNotMatchDomainFromUrlException;
 use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\PowerDnsClientException;
@@ -31,7 +35,7 @@ function DomainManager_config()
 {
     return [
         "name" => 'Менеджер доменов',
-        "description" => 'Для работы модуля требуется  php-intl',
+        "description" => 'Для работы модуля требуется  php-intl а так же php-ssh2',
         "version" => "1",
         "author" => "<a href=\"https://github.com/07artem132\">07artem132</a>",
         "language" => "russian",
@@ -58,6 +62,20 @@ function DomainManager_output($vars)
 
 function DomainManager_activate()
 {
+    if (!extension_loaded('ssh2')) {
+        return array(
+            'status' => 'error',
+            'description' => 'Необходимо расширение php-ssh2'
+        );
+    }
+
+    if (!extension_loaded('intl')) {
+        return array(
+            'status' => 'error',
+            'description' => 'Необходимо расширение php-intl'
+        );
+    }
+
     if (!empty($error = InstallController::createTableBackupSettings())) {
         return $error;
     }
@@ -79,6 +97,10 @@ function DomainManager_activate()
     }
 
     if (!empty($error = InstallController::createTableServer())) {
+        return $error;
+    }
+
+    if (!empty($error = InstallController::createTablePackageToRelative())) {
         return $error;
     }
 
@@ -111,6 +133,9 @@ function DomainManager_deactivate()
             if (!empty($error = UninstallController::dropTable('mod_addon_domain_manager_domain_package'))) {
                 return $error;
             }
+            if (!empty($error = UninstallController::dropTable('mod_addon_domain_manager_package_relative'))) {
+                return $error;
+            }
         }
     }
 
@@ -123,7 +148,16 @@ function DomainManager_deactivate()
 
 function DomainManager_clientarea($vars)
 {
+    global $_LANG;
     $error = '';
+    $defaultLanguage = 'russian';
+    $clientLanguage = $_SESSION['Language'];
+
+    include_once(sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $defaultLanguage));
+
+    if (file_exists(sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $clientLanguage))) {
+        include_once sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $clientLanguage);
+    }
 
     if (array_key_exists('error', $_GET)) {
         $error = $_GET['error'];
@@ -133,8 +167,13 @@ function DomainManager_clientarea($vars)
         $domainPackage = DomainPackage::where('domain', '=', $_GET['domain'])->firstOrFail();
         $serverId = $domainPackage->serverId;
         $server = ServerModel::find($serverId);
-        $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+        $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
         $pdns->DomainRecordDelete($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], [['content' => $_GET['content']]]);
+        LogController::addSuccess(
+            'Клиентская область',
+            'Была удалена запись для домена ' . $_GET['domain'] .
+            ', client_id->' . $_SESSION['uid']
+        );
         redir("m=DomainManager&api=edit&domain=" . $_GET['domain'], "/");
     }
 
@@ -143,7 +182,7 @@ function DomainManager_clientarea($vars)
         $domainPackage = DomainPackage::where('domain', '=', $_GET['domain'])->firstOrFail();
         $serverId = $domainPackage->serverId;
         $server = ServerModel::find($serverId);
-        $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+        $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
         $records = $pdns->DomainRecordFormatedList($_GET['domain']);
         foreach ($records as $record_type => $record_list) {
             array_key_exists($record_type, $recordTypeCount) ? $recordTypeCount[$record_type]++ : $recordTypeCount[$record_type] = 1;
@@ -155,63 +194,164 @@ function DomainManager_clientarea($vars)
             }
             if ($recordType == 'SOA') continue;
             if ($package->{$recordType} !== -1 && $package->{$recordType} <= $recordCount) {
-                $error = sprintf('Превышен лимит записи типа %s', $recordType);
+                $error = sprintf($_LANG['DomainManager_zone_record_limit_reached'], $recordType);
+                LogController::addError(
+                    'Клиентская область',
+                    sprintf('Превышен лимит записи типа %s', $recordType) .
+                    ', client_id->' . $_SESSION['uid'],
+                    new Exception()
+                );
                 redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
             }
         }
+        if ($_POST['record_type'] === 'SRV') {
+            $record_context = sprintf('%s %s %s %s', $_POST['record_context']['Priority'], $_POST['record_context']['weight'], $_POST['record_context']['port'], $_POST['record_context']['text']);
+        } elseif ($_POST['record_type'] === 'MX') {
+            $record_context = sprintf('%s %s', $_POST['record_context']['preference'], $_POST['record_context']['exchange']);
+        } else {
+            $record_context = $_POST['record_context'];
+        }
+        $record_name = $_POST['record_name'];
+        if ($record_name === '@') {
+            $record_name = $_GET['domain'] . '.';
+        } else {
+            $regex = '/.*' . str_replace('.', '\.', $_GET['domain'] . '.') . '$/';
+            if (preg_match($regex, $record_name, $matches, PREG_OFFSET_CAPTURE, 0) !== false) {
+                if (empty($matches)) $record_name .= '.' . $_GET['domain'] . '.';
+            }
+        }
+
         if (array_key_exists($_POST['record_type'], $records)) {
             for ($i = 0; $i < count($records[$_POST['record_type']]); $i++) {
-                if ($records[$_POST['record_type']][$i]['name'] === $_POST['record_name']) {
+                if ($records[$_POST['record_type']][$i]['name'] === $record_name) {
                     $record = $records[$_POST['record_type']][$i];
                     $flagAdd = true;
                     for ($j = 0; $j < count($record['records']); $j++) {
-                        if ($record['records'][$j]->content == $_POST['record_context']) {
+                        if ($record['records'][$j]->content == $record_context) {
                             $flagAdd = false;
                         }
                     }
                     if ($flagAdd) {
                         $record['records'][] = [
-                            'content' => $_POST['record_context'],
+                            'content' => $record_context,
                             'disabled' => false
                         ];
-                        $pdns->DomainRecordCreate(
-                            $_GET['domain'],
-                            $_POST['record_name'],
-                            $_POST['record_type'],
-                            $_POST['record_ttl'],
-                            $record['records'],
+                        try {
+                            $pdns->DomainRecordCreate(
+                                $_GET['domain'],
+                                $record_name,
+                                $_POST['record_type'],
+                                $_POST['record_ttl'],
+                                $record['records'],
+                                );
+                        } catch (DomainEditNotMatchDomainFromUrlException $e) {
+                            LogController::addError(
+                                'Клиентская область',
+                                'Вы пытаетесь создать запись с именем домена отличного от текушего (возможно забыли точку на конеце), домен->' . $_GET['domain'] .
+                                ', client_id->' . $_SESSION['uid'] .
+                                ', server_id->' . $server->id,
+                                $e
                             );
+                            $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
+                            redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+                        } catch (PowerDnsClientException $e) {
+                            $error = json_decode($e->response);
+                            $error = pdnsTranslate($error->error);
+                            LogController::addError(
+                                'Клиентская область',
+                                'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                                'client_id->' . $_SESSION['uid'] .
+                                ', server_id->' . $server->id,
+                                $e
+                            );
+                            redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+                        }
                     }
+                    LogController::addSuccess(
+                        'Клиентская область',
+                        'Была создана запись для домена ' . $_GET['domain'] .
+                        'client_id->' . $_SESSION['uid']
+                    );
                     redir("m=DomainManager&api=edit&domain=" . $_GET['domain'], "/");
                 }
             }
-            $pdns->DomainRecordCreate(
-                $_GET['domain'],
-                $_POST['record_name'],
-                $_POST['record_type'],
-                $_POST['record_ttl'],
-                [
+            try {
+                $pdns->DomainRecordCreate(
+                    $_GET['domain'],
+                    $record_name,
+                    $_POST['record_type'],
+                    $_POST['record_ttl'],
                     [
-                        'content' => $_POST['record_context'],
-                        'disabled' => false
+                        [
+                            'content' => $record_context,
+                            'disabled' => false
+                        ]
                     ]
-                ]
-            );
+                );
+            } catch (DomainEditNotMatchDomainFromUrlException $e) {
+                LogController::addError(
+                    'Клиентская область',
+                    'Вы пытаетесь создать запись с именем домена отличного от текушего (возможно забыли точку на конеце), домен->' . $_GET['domain'] .
+                    ', client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
+                redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+            } catch (PowerDnsClientException $e) {
+                $error = json_decode($e->response);
+                $error = pdnsTranslate($error->error);
+                LogController::addError(
+                    'Клиентская область',
+                    'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                    'client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+            }
         } else {
-            $pdns->DomainRecordCreate(
-                $_GET['domain'],
-                $_POST['record_name'],
-                $_POST['record_type'],
-                $_POST['record_ttl'],
-                [
+            try {
+                $pdns->DomainRecordCreate(
+                    $_GET['domain'],
+                    $record_name,
+                    $_POST['record_type'],
+                    $_POST['record_ttl'],
                     [
-                        'content' => $_POST['record_context'],
-                        'disabled' => false
+                        [
+                            'content' => $record_context,
+                            'disabled' => false
+                        ]
                     ]
-                ]
-            );
+                );
+            } catch (DomainEditNotMatchDomainFromUrlException $e) {
+                LogController::addError(
+                    'Клиентская область',
+                    'Вы пытаетесь создать запись с именем домена отличного от текушего (возможно забыли точку на конеце), домен->' . $_GET['domain'] .
+                    ', client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
+                redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+            } catch (PowerDnsClientException $e) {
+                $error = json_decode($e->response);
+                $error = pdnsTranslate($error->error);
+                LogController::addError(
+                    'Клиентская область',
+                    'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                    'client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                redir("m=DomainManager&error=" . $error, "/");
+            }
         }
-
+        LogController::addSuccess(
+            'Клиентская область',
+            'Была создана запись для домена ' . $_GET['domain'] .
+            'client_id->' . $_SESSION['uid']
+        );
         redir("m=DomainManager&api=edit&domain=" . $_GET['domain'], "/");
     }
 
@@ -221,7 +361,7 @@ function DomainManager_clientarea($vars)
             $domainPackage = DomainPackage::where('domain', $_GET['domain'])->firstOrFail();
             $serverId = $domainPackage->serverId;
             $server = ServerModel::find($serverId);
-            $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+            $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
             $records = array_values($_POST['record']);
             array_walk_recursive($records, function (&$item, $key) use (&$recordTypeCount) {
                 $item = $key == 'disabled' ? (bool)$item : $item;
@@ -229,16 +369,60 @@ function DomainManager_clientarea($vars)
                     array_key_exists($item, $recordTypeCount) ? $recordTypeCount[$item]++ : $recordTypeCount[$item] = 1;
                 }
             });
+            array_walk($records, function (&$item, $key) {
+                for ($i = 0; $i < count($item['records']); $i++) {
+                    if (is_array($item['records'][$i]['content'])) {
+                        if ($item['type'] === 'SRV') {
+                            $item['records'][$i]['content'] = sprintf('%s %s %s %s', $item['records'][$i]['content']['priority'], $item['records'][$i]['content']['weight'], $item['records'][$i]['content']['port'], $item['records'][$i]['content']['target']);
+                        } elseif ($item['type'] === 'MX') {
+                            $item['records'][$i]['content'] = sprintf('%s %s', $item['records'][$i]['content']['preference'], $item['records'][$i]['content']['exchange']);
+                        }
+                    }
+                    if ($item['name'] === '@') {
+                        $item['name'] = $_GET['domain'] . '.';
+                    } else {
+                        $regex = '/.*' . str_replace('.', '\.', $_GET['domain'] . '.') . '$/';
+                        if (preg_match($regex, $item['name'], $matches, PREG_OFFSET_CAPTURE, 0) !== false) {
+                            if (empty($matches)) $item['name'] .= '.' . $_GET['domain'] . '.';
+                        }
+                    }
+                }
+            });
+
             $package = PackageModel::find($domainPackage->package_id);
 
             foreach ($recordTypeCount as $recordType => $recordCount) {
                 if ($package->{$recordType} !== -1 && $package->{$recordType} <= $recordCount) {
-                    $error = sprintf('Превышен лимит записи типа %s', $recordType);
+                    $error = sprintf($_LANG['DomainManager_zone_record_limit_reached'], $recordType);
+                    LogController::addError(
+                        'Клиентская область',
+                        sprintf('Превышен лимит записи типа %s', $recordType) .
+                        ', client_id->' . $_SESSION['uid'],
+                        new Exception()
+                    );
                     redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
                 }
             }
-
-            $pdns->DomainRecordsCreate($_GET['domain'], $records);
+            try {
+                $pdns->DomainRecordsCreate($_GET['domain'], $records);
+                LogController::addSuccess(
+                    'Клиентская область',
+                    'Были изменены записи домена ' . $_GET['domain'] .
+                    ', client_id->' . $_SESSION['uid']
+                );
+            } catch (PowerDnsClientException $e) {
+                $error = json_decode($e->response);
+                $error = pdnsTranslate($error->error);
+                LogController::addError(
+                    'Клиентская область',
+                    'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                    'client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                redir("m=DomainManager&api=edit&domain=" . $_GET['domain'] . "&error=" . $error, "/");
+            }
+            redir("m=DomainManager&api=edit&domain=" . $_GET['domain'], "/");
         }
 
         $domainPackage = DomainPackage::where('domain', $_GET['domain'])->firstOrFail();
@@ -247,7 +431,7 @@ function DomainManager_clientarea($vars)
         $package = PackageModel::findOrFail($package_id);
         $server = ServerModel::find($serverId);
 
-        $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+        $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
         $records = $pdns->DomainRecordFormatedList($_GET['domain']);
         unset($records['SOA']);
         $type_stats = array_flip(array_keys($records));
@@ -260,7 +444,7 @@ function DomainManager_clientarea($vars)
             'pagetitle' => 'DNS Manager',
             'breadcrumb' => array('index.php?m=DomainManager' => 'DNS Manager'),
             'templatefile' => 'templates/client_records',
-            'requirelogin' => false,
+            'requirelogin' => true,
             'forcessl' => false,
             'vars' => array(
                 'records' => $pdns->DomainRecordList($_GET['domain']),
@@ -288,18 +472,36 @@ function DomainManager_clientarea($vars)
         if (array_key_exists('domain', $_GET)) {
             try {
                 $DeleteDomain = DomainPackage::where('domain', '=', $_GET['domain'])->firstOrFail();
-                $DeleteDomain->server_id;
+                if ($DeleteDomain->client_id !== $_SESSION['uid']) {
+                    $error = $_LANG['DomainManager_domain_is_not_assigned_account'];
+                    LogController::addError(
+                        'Клиентская область',
+                        'Невозможно удалить домен, так как он не привязан к аккаунту клиента в whmcs (принадлежит другому), client_id->' . $_SESSION['uid'],
+                        new Exception()
+                    );
+                    redir("m=DomainManager&error=" . $error, "/");
+                }
                 $server = ServerModel::find($DeleteDomain->server_id);
-                $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $pdns->DomainDelete($_GET['domain'] . '.');
                 $DeleteDomain->delete();
+                LogController::addSuccess(
+                    'Клиентская область',
+                    'Был удален домен ' . $_GET['domain'] .
+                    'client_id->' . $_SESSION['uid']
+                );
                 redir("m=DomainManager", "/");
             } catch (PowerDnsClientException $e) {
                 $error = json_decode($e->response);
                 $error = pdnsTranslate($error->error);
                 redir("m=DomainManager&error=" . $error, "/");
             } catch (ModelNotFoundException $e) {
-                $error = 'Невозможно удалить домен, так как он не привязан к аккаунту в whmcs';
+                $error = $_LANG['DomainManager_domain_is_not_assigned_account'];
+                LogController::addError(
+                    'Клиентская область',
+                    'Невозможно удалить домен, так как он не привязан к аккаунту в whmcs, client_id->' . $_SESSION['uid'],
+                    new Exception()
+                );
                 redir("m=DomainManager&error=" . $error, "/");
             }
         }
@@ -307,11 +509,23 @@ function DomainManager_clientarea($vars)
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (DomainPackage::where('domain', $_POST['zone_name'])->count() != 0) {
-            $error = sprintf('Домен %s уже создан другим пользователем', $_POST['zone_name']);
+            $error = sprintf($_LANG['DomainManager_domain_already_created'], $_POST['zone_name']);
+            LogController::addError(
+                'Клиентская область',
+                sprintf('Домен %s уже создан другим пользователем', $_POST['zone_name']) .
+                ', client_id->' . $_SESSION['uid'],
+                new Exception()
+            );
             redir("m=DomainManager&error=" . $error, "/");
         }
 
         if (!empty($error = blacklistCheck($_POST['zone_name']))) {
+            LogController::addError(
+                'Клиентская область',
+                $error .
+                ', client_id->' . $_SESSION['uid'],
+                new Exception()
+            );
             redir("m=DomainManager&error=" . $error, "/");
         }
 
@@ -322,12 +536,27 @@ function DomainManager_clientarea($vars)
             case 2:
                 $rel_id = Addon::findOrFail($_POST['rel_id'])->addonid;
                 break;
+            case 3:
+                $domainTld = '.' . Domain::findOrFail($_POST['rel_id'])->tld;
+                $domainPricing = Capsule::table('tbldomainpricing')->where('extension', $domainTld)->first();
+                if (empty($domainPricing)) {
+                    $rel_id = 0;
+                }
+                $rel_id = $domainPricing->id;
+                break;
         }
-        $package = PackageModel::where('rel_type', '=', $_POST['rel_type'])
+        $packageRelative = PackageRelative::where('rel_type', '=', $_POST['rel_type'])
             ->where('rel_id', '=', $rel_id)
             ->firstOrFail();
+        $package = PackageModel::findOrFail($packageRelative->package_id);
 
         if (!empty($error = ZoneLimitCheck($package->id, $_POST['zone_name']))) {
+            LogController::addError(
+                'Клиентская область',
+                $error .
+                ', client_id->' . $_SESSION['uid'],
+                new Exception()
+            );
             redir("m=DomainManager&error=" . $error, "/");
         }
 
@@ -337,6 +566,7 @@ function DomainManager_clientarea($vars)
             $packageDomain = new DomainPackage();
             $packageDomain->domain = $_POST['zone_name'];
             $packageDomain->rel_id = $_POST['rel_id'];
+            $packageDomain->rel_type = $_POST['rel_type'];
             $packageDomain->package_id = $package->id;
             $server = ServerModel::find($package->server_id);
             $canonical_ns = $server->ns_list;
@@ -344,7 +574,7 @@ function DomainManager_clientarea($vars)
                 $item .= '.';
             });
             try {
-                $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $pdns->DomainCreate($_POST['zone_name'] . '.', 'Master', $canonical_ns);
                 if ($_POST['ip'] == 'other') {
                     $ip = $_POST['custom_ip'];
@@ -360,6 +590,12 @@ function DomainManager_clientarea($vars)
                         '60',
                         [['content' => $ip, 'disabled' => false]],
                         );
+                    LogController::addSuccess(
+                        'Клиентская область',
+                        'Была создана запись www типа А для зоны ' . $_POST['zone_name'] .
+                        ', client_id->' . $_SESSION['uid'] .
+                        'ip->' . $ip
+                    );
                 }
 
                 if (array_key_exists('create_root_record', $_POST)) {
@@ -370,33 +606,63 @@ function DomainManager_clientarea($vars)
                         '60',
                         [['content' => $ip, 'disabled' => false]],
                         );
+                    LogController::addSuccess(
+                        'Клиентская область',
+                        'Была создана запись @ типа А для зоны ' . $_POST['zone_name'] .
+                        ', client_id->' . $_SESSION['uid'] .
+                        'ip->' . $ip
+                    );
                 }
                 $packageDomain->saveOrFail();
+                LogController::addSuccess(
+                    'Клиентская область',
+                    'Была создана зона ' . $_POST['zone_name'] .
+                    ', client_id->' . $_SESSION['uid']
+                );
             } catch (PowerDnsClientException $e) {
                 $error = json_decode($e->response);
                 $error = pdnsTranslate($error->error);
+                LogController::addError(
+                    'Клиентская область',
+                    'Во время создания зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                    'client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
                 redir("m=DomainManager&error=" . $error, "/");
             } catch (DomainEditNotMatchDomainFromUrlException $e) {
-                $error = 'Вы пытаетесь создать запись с именем домена отличного от текушего';
+                LogController::addError(
+                    'Клиентская область',
+                    'Не удалось создать домен с записями так как имя записи не соответствует целевому домену (на конце записи должна быть точка), домен->' . $_POST['zone_name'] .
+                    ', client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
                 redir("m=DomainManager&error=" . $error, "/");
             }
         } else {
-            $error = 'Действие невозможно, превышен лимит доменов для пакета.';
+            $error = $_LANG['DomainManager_zone_limit_reached'];
+            LogController::addError(
+                'Клиентская область',
+                'Действие невозможно, превышен лимит доменов для пакета, client_id->' . $_SESSION['uid'],
+                new Exception()
+            );
             redir("m=DomainManager&error=" . $error, "/");
         }
     }
-
     return array(
         'pagetitle' => 'DNS Manager',
         'breadcrumb' => array('index.php?m=DomainManager' => 'DNS Manager'),
         'templatefile' => 'templates/client_index',
-        'requirelogin' => false,
+        'requirelogin' => true,
         'forcessl' => false,
         'vars' => array(
             'error' => $error,
-            'service_packages' => get_client_service_package(1),
-            'addon_packages' => get_client_addon_package(1),
-            'ip_list' => get_client_ip_list(1),
+            'service_packages' => get_client_service_package($_SESSION['uid']),
+            'addon_packages' => get_client_addon_package($_SESSION['uid']),
+            'domain_packages' => get_client_domain_package($_SESSION['uid']),
+            'ip_list' => get_client_ip_list($_SESSION['uid']),
         ),
     );
 }
@@ -404,37 +670,48 @@ function DomainManager_clientarea($vars)
 
 function pdnsTranslate(string $error): string
 {
+    global $_LANG;
     switch (true) {
         case preg_match('/Could not find domain \'(.*)\'/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
-            return sprintf('Домен %s не найден', $matches[1][0]);
+            return sprintf($_LANG['DomainManager_domain_not_found'], $matches[1][0]);
             break;
         case preg_match('/Domain \'(.*)\' already exists/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
-            return sprintf('Домен %s уже создан другим пользователем', $matches[1][0]);
+            return sprintf($_LANG['DomainManager_domain_busy'], $matches[1][0]);
+            break;
+        case preg_match('/Key \'name\' not present or not a String/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
+            return sprintf($_LANG['DomainManager_name_value_is_not_correct']);
+            break;
+        case preg_match('/Record (.*): Not in expected format \(parsed as \'(.*)\'\)/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
+            return sprintf($_LANG['DomainManager_not_in_expected_format'], $matches[1][0], $matches[2][0]);
             break;
         default:
             return $error;
     }
 }
 
-function get_client_ip_list(int $client_id): array
+function get_client_ip_list(?int $client_id): array
 {
-    $services = Service::where('userid', '=', $client_id)->get();
+    if (empty($client_id)) return [];
+    $services = Service::where('userid', '=', $client_id)->where('domainstatus', '=', 'Active')->get();
     $assIpList = $services->pluck('assignedips');
-    $dedicatedIpList = $services->pluck('dedicatedip')->transform(function ($item, $key) {
+    $dedicatedIpList = $services->pluck('dedicatedip');
+
+    $ipList = $assIpList->merge($dedicatedIpList)->transform(function ($item, $key) {
         if ($item != "") {
             return explode("\r\n", $item);
         }
         return $item;
-    });
-
-    $ipList = $assIpList->merge($dedicatedIpList)->filter(function ($item, $key) {
+    })->filter(function ($item, $key) {
         return $item != "" ? true : false;
     });
     return $ipList->flatten()->toArray();
 }
 
-function get_client_service_package(int $client_id): array
+function get_client_service_package(?int $client_id): array
 {
+    if (empty($client_id)) return [];
+
+
     return Service::select(
         'tblhosting.id',
         'tblhosting.domain',
@@ -447,12 +724,18 @@ function get_client_service_package(int $client_id): array
         )
         ->where('userid', '=', $client_id)
         ->where('domainstatus', '=', 'Active')
-        ->where('mod_addon_domain_manager_package.rel_type', '=', 1)
+        ->where('mod_addon_domain_manager_package_relative.rel_type', '=', 1)
         ->join(
-            'mod_addon_domain_manager_package',
-            'mod_addon_domain_manager_package.rel_id',
+            'mod_addon_domain_manager_package_relative',
+            'mod_addon_domain_manager_package_relative.rel_id',
             '=',
             'tblhosting.packageid'
+        )
+        ->join(
+            'mod_addon_domain_manager_package',
+            'mod_addon_domain_manager_package_relative.package_id',
+            '=',
+            'mod_addon_domain_manager_package.id'
         )
         ->get()->keyBy('id')->transform(function ($item, $key) {
             $domainPackage = DomainPackage::where('rel_id', $key)->where('package_id', $item->package_id)->get();
@@ -467,8 +750,10 @@ function get_client_service_package(int $client_id): array
         })->toArray();
 }
 
-function get_client_addon_package(int $client_id): array
+function get_client_addon_package(?int $client_id): array
 {
+    if (empty($client_id)) return [];
+
     return Addon::select(
         'tblhostingaddons.id',
         'tblhostingaddons.hostingid',
@@ -482,12 +767,18 @@ function get_client_addon_package(int $client_id): array
         ->with('service')
         ->where('userid', '=', $client_id)
         ->where('status', '=', 'Active')
-        ->where('mod_addon_domain_manager_package.rel_type', '=', 2)
+        ->where('mod_addon_domain_manager_package_relative.rel_type', '=', 2)
         ->join(
-            'mod_addon_domain_manager_package',
-            'mod_addon_domain_manager_package.rel_id',
+            'mod_addon_domain_manager_package_relative',
+            'mod_addon_domain_manager_package_relative.rel_id',
             '=',
             'tblhostingaddons.addonid'
+        )
+        ->join(
+            'mod_addon_domain_manager_package',
+            'mod_addon_domain_manager_package_relative.package_id',
+            '=',
+            'mod_addon_domain_manager_package.id'
         )
         ->get()->keyBy('id')->transform(function ($item, $key) {
             $domainPackage = DomainPackage::where('rel_id', $key)->where('package_id', $item->package_id)->get();
@@ -503,9 +794,50 @@ function get_client_addon_package(int $client_id): array
         })->toArray();
 }
 
+
+function get_client_domain_package(?int $client_id): array
+{
+    if (empty($client_id)) return [];
+    $domains = Domain::select('tbldomains.id', 'tbldomains.domain')
+        ->where('userid', '=', $client_id)
+        ->where('status', '=', 'Active')
+        ->get();
+
+
+    return $domains->keyBy('id')->transform(function ($item, $key) {
+        $domainPricing = Capsule::table('tbldomainpricing')->where('extension', '.' . $item->tld)->first();
+        if (empty($domainPricing)) {
+            return [];
+        }
+        $packageRelative = PackageRelative::where('rel_id', $domainPricing->id)->where('rel_type', 3)->first();
+        if (empty($packageRelative)) {
+            return [];
+        }
+        $package = PackageModel::findOrFail($packageRelative->package_id);
+        $domainPackage = DomainPackage::where('rel_id', $key)
+            ->where('package_id', $packageRelative->package_id)
+            ->where('rel_type', 3)
+            ->get();
+        return [
+            'domain' => $item->domain,
+            'package_domains' => $domainPackage->pluck('domain')->toArray(),
+            'domain_id' => $key,
+            'domain_zone_limit' => $package->domain_zone_limit,
+            'domain_zone_filter' => $package->domain_zone_filter,
+            'domain_count' => $domainPackage->count(),
+        ];
+    })->reject(function ($item, $key) {
+        return empty($item);
+    })->toArray();
+}
+
 function blacklistCheck(string $domain): ?string
 {
+    global $_LANG;
     $blackList = BlackListModel::all();
+
+    if ($blackList->count() === 0) return null;
+
     $regex = "/(";
     for ($i = 0; $i < $blackList->count(); $i++) {
         if (strpos($blackList[$i]->domain, '*.') !== false) {
@@ -524,11 +856,12 @@ function blacklistCheck(string $domain): ?string
     $result = preg_match($regex, $domain, $matches, PREG_OFFSET_CAPTURE, 0);
 
     if ($result === false) {
-        return sprintf('Возникла ошибка при выполнении регулярного выражения, свяжитесь с администратором');
+        dd($result);
+        return sprintf($_LANG['DomainManager_zone_regex_error']);
     }
 
     if ($result > 0) {
-        return sprintf('Домен %s занесен в черный список администратором', $domain);
+        return sprintf($_LANG['DomainManager_domain_blacklisted'], $domain);
     }
 
     return null;
@@ -537,7 +870,9 @@ function blacklistCheck(string $domain): ?string
 
 function ZoneLimitCheck(int $package_id, string $domain): ?string
 {
+    global $_LANG;
     $allowZone = explode(',', PackageModel::findOrFail($package_id)->domain_zone_filter);
+
     $regex = "/(";
     for ($i = 0; $i < count($allowZone); $i++) {
         if (strpos($allowZone[$i], '*.') !== false) {
@@ -545,6 +880,8 @@ function ZoneLimitCheck(int $package_id, string $domain): ?string
             $part2 = substr($allowZone[$i], 2);
 
             $regex .= str_replace("*.", "^.*?\.", $part1 . str_replace('.', '\.', $part2));
+        } elseif ($allowZone[$i] == '*') {
+            $regex .= '.*';
         } else {
             $regex .= '^' . str_replace('.', '\.', $allowZone[$i]);
         }
@@ -552,15 +889,14 @@ function ZoneLimitCheck(int $package_id, string $domain): ?string
             $regex .= "|";
     }
     $regex .= ")$/";
-
     $result = preg_match($regex, $domain, $matches, PREG_OFFSET_CAPTURE, 0);
 
     if ($result === false) {
-        return sprintf('Возникла ошибка при выполнении регулярного выражения, свяжитесь с администратором');
+        return sprintf($_LANG['DomainManager_zone_regex_error']);
     }
 
     if ($result === 0) {
-        return sprintf('Вы не можете создать домен в этой зоне');
+        return sprintf($_LANG['DomainManager_zone_not_allowed']);
     }
 
     return null;

@@ -49,7 +49,10 @@
                         {$package.title}
                     </td>
                     <td>
-                        {$package.rel_product}
+                        {foreach from=$package.items item="item"}
+                            {$item->full_text}
+                            <br/>
+                        {/foreach}
                     </td>
                     <td>
                         {$package.domain_zone_filter}
@@ -84,7 +87,10 @@
                     </td>
                     <td>
                         <a href="addonmodules.php?module=DomainManager&action=delete_package&id={$package.id}"
-                           title="Удалить пакет">
+                           title="Удалить пакет"
+                           onClick="return window.confirm('Вы точно хотите удалить пакет {$package.title} ?');"
+
+                        >
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>

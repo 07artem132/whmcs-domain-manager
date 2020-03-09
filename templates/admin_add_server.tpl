@@ -45,6 +45,17 @@
                 <label class="info_text" for="ip">IP для api запросов</label>
             </div>
             <div class="col-md-3 text-right title">
+                <label for="port">port:</label>
+            </div>
+            <div class="col-md-3">
+                <div>
+                    <input type="text" class="form-control" name="port" id="port" value="{$port}" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="info_text" for="port">Порт pdns сервера для api запросов</label>
+            </div>
+            <div class="col-md-3 text-right title">
                 <label for="token">Токен</label>
             </div>
             <div class="col-md-3">

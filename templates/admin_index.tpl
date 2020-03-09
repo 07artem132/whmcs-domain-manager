@@ -14,36 +14,44 @@
 {/if}
 <div class="col-md-12">
     {if $request_server eq false}
-        <div class="col-sm-4" style="margin-top:20px;">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Зоны на серверах (Всего: {$stats.domain_total})</h3>
-                </div>
-                <div class="panel-body" style="padding: 5px;">
-                    <canvas id="chartjs-1" class="chartjs" width="962" height="481"
-                            style="display: block; height: 385px; width: 770px;"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-4" style="margin-top:20px;">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Размешенные зоны доменов</h3>
-                </div>
-                <div class="panel-body" style="padding: 5px;">
-                    <canvas id="chartjs-2" class="chartjs" width="962" height="481"
-                            style="display: block; height: 385px; width: 770px;"></canvas>
+        <div style="display: -webkit-box;">
+            <div class="col-sm-4" style="margin-top:20px;">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Зоны на серверах (Всего: {$stats.domain_total})</h3>
+                    </div>
+                    <div class="panel-body" style="padding: 5px;">
+                        <canvas id="chartjs-1" class="chartjs" width="962" height="481"
+                                style="display: block; height: 385px; width: 770px;"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-4" style="margin-top:20px;">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Заказанные пакеты (Всего: {$stats.client_package_total})</h3>
+            <div class="col-sm-4" style="margin-top:20px;">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Размешенные зоны доменов</h3>
+                    </div>
+                    <div class="panel-body" style="padding: 5px;">
+                        <canvas id="chartjs-2" class="chartjs" width="962" height="481"
+                                style="display: block; height: 385px; width: 770px;"></canvas>
+                    </div>
                 </div>
-                <div class="panel-body" style="padding: 5px;">
-                    <canvas id="chartjs-3" class="chartjs" width="962" height="481"
-                            style="display: block; height: 385px; width: 770px;"></canvas>
+            </div>
+            <div class="col-sm-4" style="margin-top:20px;">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Заказанные пакеты (Всего: {$stats.client_package_total})</h3>
+                    </div>
+                    <div class="panel-body" style="padding: 5px;">
+                        {if $stats.client_package_total!==0}
+                            <canvas id="chartjs-3" class="chartjs" width="962" height="481"
+                                    style="display: block; height: 385px; width: 770px;"></canvas>
+                        {else}
+                            <div style="text-align: center;vertical-align: middle;">
+                                Недостаточно данных
+                            </div>
+                        {/if}
+                    </div>
                 </div>
             </div>
         </div>
@@ -64,8 +72,47 @@
                     <h3 class="panel-title">Использование пакетов </h3>
                 </div>
                 <div class="panel-body" style="padding: 5px;">
-                    <canvas id="chartjs-5" class="chartjs" width="962" height="481"
-                            style="display: block; height: 385px; width: 770px;"></canvas>
+                    {if array_sum($stats.client_package_use.data) !==0}
+                        <canvas id="chartjs-5" class="chartjs" width="962" height="481"
+                                style="display: block; height: 385px; width: 770px;"></canvas>
+                    {else}
+                        <div style="text-align: center;vertical-align: middle;">
+                            Недостаточно данных
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4" style="margin-top:20px;">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Резервные копии </h3>
+                </div>
+                <div class="panel-body" style="padding: 5px;">
+                    <div class="widget-content-padded">
+                        <div>
+        <span>
+            <i class="{$icon}" style="color: {$color}"></i>
+          <span>{$text}</span>
+        </span><br/>
+                            <span>
+            <i class="{$icon3}" style="color: {$color3}"></i>
+          <span style="height: 32px;display: table-cell;vertical-align: middle;">{$text3}</span>
+        </span><br/>
+                            <span>
+          <span style="padding-top: 2%">{$text4}</span>
+        </span><br/>
+                        </div>
+
+                    </div>
+                    <div style="border-top: 1px solid #eee; padding-top: 1%; padding-left: 2%; padding-bottom: 1%;">
+                        {if empty($diffLastRunHours)}
+                            Резервная копия ещё не выполнялась ни разу!
+                        {else}
+                            Последний запуск был {$diffLastRunHours} часа(ов) назад
+                        {/if}
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -162,6 +209,7 @@
         }
     });
 
+    {if $stats.client_package_total!==0}
     const chart3 = new Chart(document.getElementById('chartjs-3').getContext('2d'), {
         type: 'pie',
         data: {
@@ -194,6 +242,7 @@
             }
         }
     });
+    {/if}
 
     const chart4 = new Chart(document.getElementById('chartjs-4').getContext('2d'), {
         type: 'pie',
@@ -233,6 +282,7 @@
             }
         }
     });
+    {if array_sum($stats.client_package_use.data) !==0}
     const chart5 = new Chart(document.getElementById('chartjs-5').getContext('2d'), {
         type: 'pie',
         data: {
@@ -271,4 +321,5 @@
             }
         }
     });
+    {/if}
 </script>

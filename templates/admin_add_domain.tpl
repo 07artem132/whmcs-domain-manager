@@ -33,11 +33,13 @@
                         <option disabled selected value="">Не выбрано</option>
                         <option value="1">Продукт</option>
                         <option value="2">Дополнение</option>
+                        <option value="3">Домен</option>
                     </select>
                 </div>
             </div>
             <div class="col-md-6">
-                <label class="info_text" for="type">Выберите с чем ассоциировать домен (опционально)</label>
+                <label class="info_text" for="type">Выберите с чем ассоциировать домен (Только если заполнено поле
+                    выше)</label>
             </div>
             <div class="col-md-3 text-right title">
                 <label for="server">Сервер:</label>

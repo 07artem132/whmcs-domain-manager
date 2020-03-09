@@ -49,6 +49,17 @@
             <div class="col-md-6">
                 <label class="info_text" for="token">api-key значение в конфиге</label>
             </div>
+            <div class="col-md-3 text-right title">
+                <label for="token">Порт</label>
+            </div>
+            <div class="col-md-3">
+                <div>
+                    <input type="text" class="form-control" name="port" id="port" value="{$server.port}" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="info_text" for="token">Порт сервера</label>
+            </div>
         </div>
         <div class="row text-center"><br/>
             <input class="btn btn-success" type="submit" value="Сохранить изменения"/>

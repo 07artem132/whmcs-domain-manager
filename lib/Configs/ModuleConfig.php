@@ -13,6 +13,7 @@ class ModuleConfig
     private const defaultLanguage = 'russian';
     private const whmcsRootDir = ROOTDIR;
     private const tempPath = self::whmcsRootDir . '/modules/addons/' . self::moduleName . '/temp';
+    private const backupPath = self::whmcsRootDir . '/modules/addons/' . self::moduleName . '/backup';
     private const relativePath = '/modules/addons/' . self::moduleName;
     private const moduleName = 'DomainManager';
 
@@ -30,6 +31,14 @@ class ModuleConfig
     public static function geRelativePath(): string
     {
         return self::relativePath;
+    }
+
+    /**
+     * @return string
+     */
+    public static function geBackupPath(): string
+    {
+        return self::backupPath;
     }
 
     /**
@@ -56,6 +65,10 @@ class ModuleConfig
         return self::moduleName;
     }
 
+    public static function getBaseFullPath(): string
+    {
+        return self::getWhmcsRootDir() . '/modules/addons/' . self::getModuleName();
+    }
     /**
      * @return string
      */

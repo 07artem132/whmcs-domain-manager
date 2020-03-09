@@ -147,6 +147,7 @@ window.onload = function () {
         "ordering": true,
         "dom": '<"listtable"fit>pl',
         "responsive": true,
+        "order": [[3, 'desc']],
         "oLanguage": {
             "sEmptyTable": "Записей не найдено",
             "sInfo": "Показано с _START_ по _END_ из _TOTAL_",

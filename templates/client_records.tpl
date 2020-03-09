@@ -83,12 +83,12 @@
         <a href="/?m=DomainManager" class="btn btn-back btn-icon" style="height: inherit;">
             <i class="fa fa-arrow-left"></i>
         </a>
-        <h2 style="display: initial;">Управление DNS</h2>
+        <h2 style="display: initial;">{$LANG.DomainManager_manager_dns}</h2>
     </div>
     <div class="module-header" style="display: flow-root;    margin-bottom: 20px;   ">
         <div class="header-title" style=" float: left;">
             <h1 style="font-size: 20px;color: #45464c;line-height: 34px;padding: 0;margin: 0;">
-                Редактор зоны - {$domain}
+                {$LANG.DomainManager_edit_zone} - {$domain}
             </h1>
         </div>
         <div class="header-actions" style="float: right;">
@@ -103,7 +103,7 @@
                     <div class="fluid-0" style="float: left;">
                         <button class="btn btn-primary" data-act="addRecord"
                                 data-toggle="modal" data-target="#AddZoneModal">
-                            Добавить запись
+                            {$LANG.DomainManager_add_record}
                         </button>
 
                     </div>
@@ -245,10 +245,10 @@
         <table class="table">
             <thead>
             <tr>
-                <th>Имя</th>
-                <th>Тип</th>
+                <th>{$LANG.DomainManager_record_name}</th>
+                <th>{$LANG.DomainManager_record_type}</th>
                 <th>TTL</th>
-                <th>Значение</th>
+                <th>{$LANG.DomainManager_record_context}</th>
                 <th>&nbsp;</th>
             </tr>
             </thead>
@@ -259,21 +259,22 @@
                         {continue}
                     {/if}
                     <tr id="record0" class="record">
-                        <td data-label="Имя" class="cell-sm-12 form-group">
+                        <td class="cell-sm-12 form-group" style="vertical-align: inherit;">
                             <input type="text" class="form-control"
                                    name="record[{$smarty.foreach.recordData.index}][name]"
-                                   value="{$recordData.name}" title=""
-                                   placeholder="Имя"
+                                   value="{if $recordData.name eq {"`$smarty.get.domain`."}}@{else}{$recordData.name|regex_replace:{"/\.`$smarty.get.domain`.\$/"}:""}{/if}"
+                                   title=""
+                                   placeholder=""
                                    required=""
-                                   data-original-title="Name of the owner, i.e. name of the node this resource record is related to.">
+                            >
                         </td>
-                        <td data-label="Тип" class="cell-sm-12">
+                        <td class="cell-sm-12" style="vertical-align: inherit;">
                             <input type="hidden" name="record[{$smarty.foreach.recordData.index}][type]"
                                    value="{$recordData.type}">
                             <input class="form-control" type="text" value="{$recordData.type}" disabled="" title=""
                             >
                         </td>
-                        <td data-label="TTL" class="cell-sm-12 form-group">
+                        <td class="cell-sm-12 form-group" style="vertical-align: inherit;">
                             <input class="form-control" type="number"
                                    name="record[{$smarty.foreach.recordData.index}][ttl]"
                                    value="{$recordData.ttl}" title=""
@@ -281,11 +282,41 @@
                                    required="" min="1"
                             >
                         </td>
-                        <td data-label="Значение" class="cell-sm-12">
-                            <input class="form-control table-input" type="text"
-                                   name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content]"
-                                   value="{$record->content}" title="" placeholder=""
-                            >
+                        <td class="cell-sm-12">
+                            {if $recordData.type eq 'SRV'}
+                                {assign var="content" value=" "|explode:$record->content}
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][priority]"
+                                       value="{$content.0}" title="" placeholder=""
+                                >
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][weight]"
+                                       value="{$content.1}" title="" placeholder=""
+                                >
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][port]"
+                                       value="{$content.2}" title="" placeholder=""
+                                >
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][target]"
+                                       value="{$content.3}" title="" placeholder=""
+                                >
+                            {elseif $recordData.type eq 'MX'}
+                                {assign var="content" value=" "|explode:$record->content}
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][preference]"
+                                       value="{$content.0}" title="" placeholder=""
+                                >
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][exchange]"
+                                       value="{$content.1}" title="" placeholder=""
+                                >
+                            {else}
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content]"
+                                       value="{$record->content}" title="" placeholder=""
+                                >
+                            {/if}
                             <input class="form-control table-input" type="hidden"
                                    name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][disabled]"
                                    value="0" title="" placeholder=""
@@ -294,7 +325,7 @@
                         <td data-label="Actions" class="cell-sm-12 cell-actions" style="vertical-align: middle;">
                             <a href="/?m=DomainManager&api=record_delete&domain={$domain|rawurlencode}&ttl={$recordData.ttl}&name={$recordData.name|rawurlencode}&type={$recordData.type|rawurlencode}&content={$record->content|rawurlencode}"
                                style="float: right;padding-left: 10px;"
-                               title="Удалить запись">
+                               title="{$LANG.DomainManager_record_delete}">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
                         </td>
@@ -303,7 +334,7 @@
             {/foreach}
             </tbody>
         </table>
-        <button class="btn btn-success" type="submit">Сохранить изменения</button>
+        <button class="btn btn-success" type="submit">{$LANG.DomainManager_save_records}</button>
     </form>
 </div>
 
@@ -355,54 +386,99 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="AddZoneModalLabel">Добавление зоны</h5>
+                <h5 class="modal-title" id="AddZoneModalLabel">{$LANG.DomainManager_add_record_title_modal}</h5>
             </div>
             <form id="form_add_zone" method="POST" action="/?m=DomainManager&api=add&domain={$smarty.get.domain}">
                 <div class="modal-body" style="display: flow-root;">
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3" for="record_name">Имя</label>
+                        <label class="control-label col-sm-3"
+                               for="record_name">{$LANG.DomainManager_record_name}</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" id="record_name" name="record_name" value=""
-                                   required=""
-                            >
+                            <input class="form-control" type="text" id="record_name" name="record_name" value="">
                         </div>
                     </div>
                     <div id="selected_ip" class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3" for="record_type">Тип</label>
+                        <label class="control-label col-sm-3"
+                               for="record_type">{$LANG.DomainManager_record_type}</label>
                         <div class="col-sm-7">
                             <select class="form-control" id="record_type" name="record_type">
-                                <option value="A">A</option>
-                                <option value="SRV">SRV</option>
-                                <option value="TXT">TXT</option>
-                                <option value="CNAME">CNAME</option>
-                                <option value="MX">MX</option>
-                                <option value="NS">NS</option>
-                                <option value="DNAME">DNAME</option>
-                                <option value="AAAA">AAAA</option>
-                                <option value="CAA">CAA</option>
-                                <option value="PTR">PTR</option>
-                                <option value="DS">DS</option>
+                                {if $limit_A ne 0 and $type_stats.A lt $limit_A or $limit_A eq -1}
+                                    <option value="A">A</option>
+                                {/if}
+                                {if $limit_SRV ne 0 and $type_stats.SRV lt $limit_SRV or $limit_SRV eq -1}
+                                    <option value="SRV">SRV</option>
+                                {/if}
+                                {if $limit_TXT ne 0 and $type_stats.TXT lt $limit_TXT or $limit_TXT eq -1}
+                                    <option value="TXT">TXT</option>
+                                {/if}
+                                {if $limit_CNAME ne 0 and $type_stats.CNAME lt $limit_CNAME or $limit_CNAME eq -1}
+                                    <option value="CNAME">CNAME</option>
+                                {/if}
+                                {if $limit_MX ne 0 and $type_stats.MX lt $limit_MX or $limit_MX eq -1}
+                                    <option value="MX">MX</option>
+                                {/if}
+                                {if $limit_NS ne 0 and $type_stats.NS lt $limit_NS or $limit_NS eq -1}
+                                    <option value="NS">NS</option>
+                                {/if}
+                                {if $limit_DNAME ne 0 and $type_stats.DNAME lt $limit_DNAME or $limit_DNAME eq -1}
+                                    <option value="DNAME">DNAME</option>
+                                {/if}
+                                {if $limit_AAAA ne 0 and $type_stats.AAAA lt $limit_AAAA or $limit_AAAA eq -1}
+                                    <option value="AAAA">AAAA</option>
+                                {/if}
+                                {if $limit_CAA ne 0 and $type_stats.CAA lt $limit_CAA or $limit_CAA eq -1}
+                                    <option value="CAA">CAA</option>
+                                {/if}
+                                {if $limit_PTR ne 0 and $type_stats.PTR lt $limit_PTR or $limit_PTR eq -1}
+                                    <option value="PTR">PTR</option>
+                                {/if}
+                                {if $limit_DS ne 0 and $type_stats.DS lt $limit_DS or $limit_DS eq -1}
+                                    <option value="DS">DS</option>
+                                {/if}
                             </select>
                         </div>
                     </div>
                     <div id="custom_ip" class="form-group" style="height: 30px; ">
-                        <label class="control-label col-sm-3" for="record_ttl">TTL (секунды)</label>
+                        <label class="control-label col-sm-3" for="record_ttl">{$LANG.DomainManager_record_ttl}</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" id="record_ttl" name="record_ttl" value="60">
                         </div>
                     </div>
                     <div id="custom_ip" class="form-group" style="height: 30px; ">
-                        <label class="control-label col-sm-3" for="record_context">Значение</label>
-                        <div class="col-sm-7">
+                        <label class="control-label col-sm-3"
+                               for="record_context">{$LANG.DomainManager_record_context}</label>
+                        <div class="col-sm-7" id="record_context_block">
                             <input class="form-control" type="text" id="record_context" name="record_context" value="">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                    <input type="submit" class="btn btn-success" value="Добавить запись">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">{$LANG.DomainManager_close_modal}</button>
+                    <input type="submit" class="btn btn-success" value="{$LANG.DomainManager_add_record}">
                 </div>
             </form>
         </div>
     </div>
 </div>
+<script>
+    $("#record_type").change(function () {
+        switch ($(this).val()) {
+            case 'SRV':
+                $('#record_context_block').html('' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[Priority]" name="record_context[Priority]" placeholder="{$LANG.DomainManager_priority}" value="">' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[weight]" name="record_context[weight]" placeholder="{$LANG.DomainManager_weight}" value="">' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[port]" name="record_context[port]" placeholder="{$LANG.DomainManager_port}" value="">' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[text]" name="record_context[text]" placeholder="{$LANG.DomainManager_text}" value="">');
+                break;
+            case 'MX':
+                $('#record_context_block').html('' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[preference]" name="record_context[preference]" placeholder="{$LANG.DomainManager_preference}" value="">' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[exchange]" name="record_context[exchange]" placeholder="{$LANG.DomainManager_exchange}" value="">');
+                break;
+            default:
+                $('#record_context_block').html('<input class="form-control" type="text" id="record_context" name="record_context" value="">');
+                break;
+        }
+    });
+</script>

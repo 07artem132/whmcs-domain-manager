@@ -8,6 +8,8 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
+use Exception;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\PackageModel;
 use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
@@ -24,8 +26,19 @@ class AdminDeleteServerPage implements PageInterface
     {
         if (empty($package = PackageModel::where('server_id', '=', $_GET['id'])->first())) {
             ServerModel::findOrFail($_GET['id'])->delete();
+            LogController::addSuccess(
+                __CLASS__,
+                'Удаление сервера, adminid->' . $_SESSION['adminid'] .
+                ', server_id->' . $_GET['id']);
+
             redir('module=DomainManager&action=servers', 'addonmodules.php');
         } else {
+            LogController::addError(
+                __CLASS__,
+                'Неудачное удаление сервера, нельзя удалить сервер пока он назначен пакету: ' . $package->title . ', adminid->' . $_SESSION['adminid'] .
+                ', server_id->' . $_GET['id'],
+                new Exception()
+            );
             $this->vars['message'] = 'Нельзя удалить сервер пока он назначен пакету: ' . $package->title;
             $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=servers';
         }

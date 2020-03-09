@@ -9,6 +9,7 @@
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use Throwable;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\BlackListModel;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -30,6 +31,7 @@ class AdminDomainAddBlacklistPage implements PageInterface
             $blackList = new BlackListModel();
             $blackList->domain = $_POST['domain'];
             $blackList->saveOrFail();
+            LogController::addSuccess(__CLASS__, 'добавление домена в blacklist, adminid->' . $_SESSION['adminid']);
             redir('module=DomainManager&action=blacklist', 'addonmodules.php');
         }
     }

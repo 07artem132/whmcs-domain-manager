@@ -27,22 +27,31 @@ class AdminDomainPage implements PageInterface
         $domainPackage = DomainPackage::all()->keyBy('domain');
         $this->vars['domainList'] = collect([]);
         foreach ($servers as $server) {
-            $PowerDNS = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+            $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
             try {
                 $domains = collect($PowerDNS->DomainList())->transform(function ($item, $key) use ($server, $domainPackage) {
                     $domain = substr($item->id, 0, -1);
                     if ($domainPackage->has($domain)) {
-                        $status = 'Синхронизирован';
-                        $client_name = $domainPackage[$domain]->client_name;
-                        $client_id = $domainPackage[$domain]->client_id;
-                        $product_name = $domainPackage[$domain]->product_name;
-                        $product_url = $domainPackage[$domain]->service_url;
+                        try {
+                            $status = 'Синхронизирован';
+                            $client_name = $domainPackage[$domain]->client_name;
+                            $client_id = $domainPackage[$domain]->client_id;
+                            $product_name = $domainPackage[$domain]->product_name;
+                            $product_url = $domainPackage[$domain]->service_url;
+                        } catch (Throwable $e) {
+                            echo '<div class="alert alert-danger" style="margin-top: 10px" role="alert">domain-> ' . $domain . ' server ip ->' . $server->ip . ' error message->' . $e->getMessage() . '</div>';
+                            $status = 'Нет информации';
+                            $client_name = 'Нет информации';
+                            $product_name = 'Нет информации';
+                            $product_url = null;
+                            $client_id = 'Нет информации';
+                        }
                     } else {
-                        $status = 'Нет информации';
-                        $client_name = 'Нет информации';
-                        $product_name = 'Нет информации';
+                        $status = 'Есть на powerDNS сервере';
+                        $client_name = 'Не привязан';
+                        $product_name = 'Не привязан';
                         $product_url = null;
-                        $client_id = 'Нет информации';
+                        $client_id = 'Не привязан';
                     }
 
                     return [

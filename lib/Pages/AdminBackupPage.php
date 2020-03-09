@@ -9,6 +9,7 @@
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use Throwable;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\BackupSettingsModel;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -44,6 +45,7 @@ class AdminBackupPage implements PageInterface
             $settings->server_type = $_POST['server_type'];
             $settings->server_path = $_POST['server_path'];
             $settings->saveOrFail();
+            LogController::addSuccess(__CLASS__, 'сохранение изменений, adminid->' . $_SESSION['adminid']);
         }
 
         if (!empty($settings)) {

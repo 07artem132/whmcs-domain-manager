@@ -7,11 +7,17 @@
         </tr>
         <tr>
             <td>Интервал запуска</td>
-            <td>Каждую минуту</td>
+            <td>Желательно каждую минуту</td>
         </tr>
         <tr>
             <td>Последний запуск</td>
-            <td>Никогда</td>
+            <td>
+                {if empty($lastCronEvent)}
+                    Никогда
+                {else}
+                    {$lastCronEvent->created_at->toDateTimeString()}
+                {/if}
+            </td>
         </tr>
         </tbody>
     </table>

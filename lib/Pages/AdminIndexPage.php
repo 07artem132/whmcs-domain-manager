@@ -8,7 +8,9 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
+use Carbon\Carbon;
 use Throwable;
+use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\DomainPackage;
 use WHMCS\Module\Addon\DomainManager\Models\PackageModel;
@@ -28,6 +30,38 @@ class AdminIndexPage implements PageInterface
         $tdl = array_flip(json_decode(self::tdl));
         $servers = ServerModel::where('status', '=', 1)->get();
         $this->vars['request_server'] = false;
+        $backup_files = collect(array_diff(scandir(ModuleConfig::geBackupPath()), ['..', '.']))
+            ->transform(function ($item, $key) {
+                return [
+                    'last_edit' => filemtime(sprintf('%s/%s', ModuleConfig::geBackupPath(), $item)),
+                    'name' => $item
+                ];
+            })->sortByDesc('last_edit');
+
+        $last_backup_date = $backup_files->first()['last_edit'];
+        if (!empty($last_backup_date)) {
+            if (Carbon::createFromTimestamp($last_backup_date)->diffInHours(Carbon::now()) > 24) {
+                $icon = 'fa fa-times fa-2x';
+                $text = 'Прошло более 24х часов с момента последней резервной копии.';
+                $DiffLastRunHours = Carbon::createFromTimestamp($last_backup_date)->diffInHours(Carbon::now());
+                $color = 'red';
+            } else {
+                $icon = 'fa fa-check fa-2x';
+                $text = 'Прошло менее 24х часов с момента последней резервной копии.';
+                $DiffLastRunHours = Carbon::createFromTimestamp($last_backup_date)->diffInHours(Carbon::now());
+                $color = 'green';
+            }
+        } else {
+            $icon = 'fa fa-check fa-2x';
+            $color = 'red';
+            $text = 'Резервная копия ещё не выполнялась ни разу!';
+            $DiffLastRunHours = null;
+        }
+        $local_backup_count = $backup_files->count();
+        $this->vars['icon'] = $icon;
+        $this->vars['color'] = $color;
+        $this->vars['text'] = $text;
+        $this->vars['diffLastRunHours'] = $DiffLastRunHours;
 
         $zone_top = [];
         $server_error = [];
@@ -43,7 +77,7 @@ class AdminIndexPage implements PageInterface
 
         foreach ($servers as $server) {
             try {
-                $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $domains = $pdns->DomainList();
                 $domain_server[$server->ip] = count((array)$domains);
                 foreach ($domains as $item) {
@@ -83,7 +117,7 @@ class AdminIndexPage implements PageInterface
         $package = PackageModel::all()->keyBy('id');
         $client_package_use = DomainPackage::all()->groupBy('package_id')->transform(function ($item, $key) use (&$domain_error, $package) {
             $server = ServerModel::findOrFail($package[$key]->server_id);
-            $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+            $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
 
             return $item->transform(function ($item) use ($pdns, &$domain_error) {
                 try {

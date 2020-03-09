@@ -10,6 +10,7 @@ namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
+use WHMCS\Module\Addon\DomainManager\Models\LogModel;
 use WHMCS\View\Menu\MenuFactory;
 
 class AdminCronPage implements PageInterface
@@ -19,6 +20,7 @@ class AdminCronPage implements PageInterface
 
     function __construct()
     {
+        $this->vars['lastCronEvent'] = LogModel::where('status', 1)->where('module', 'Работа с резервными копиями по крону')->orderBy('created_at', 'DESC')->first();
         $this->vars['cronPath'] = ModuleConfig::getWhmcsRootDir() . '/modules/addons/' . ModuleConfig::getModuleName() . '/cron.php';
     }
 

@@ -9,17 +9,21 @@
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
+use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
 use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\PowerDNS;
 use WHMCS\View\Menu\MenuFactory;
 
-class AdminRecordListPage implements PageInterface {
-	private $templateName = 'admin_record_list.tpl';
-	private $vars = [];
+class AdminRecordListPage implements PageInterface
+{
+    private $templateName = 'admin_record_list.tpl';
+    private $vars = [];
 
-	function __construct(   ) {
-		$PowerDNS                 = new PowerDNS( 'http://ns01.service-voice.com/api/v1/', '8FVofCuKHICIrC700xCTi4RRb' );
-		$this->vars['recordList'] = $PowerDNS->DomainRecordList( $_GET['domain'] );
-	}
+    function __construct()
+    {
+        $server = ServerModel::findOrFail($_GET['server_id']);
+        $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+        $this->vars['recordList'] = $PowerDNS->DomainRecordList($_GET['domain']);
+    }
 
     /**
      * @return string

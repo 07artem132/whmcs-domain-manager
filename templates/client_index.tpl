@@ -470,13 +470,13 @@
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <a class="accordion-toggle" data-toggle="collapse" href="#collapse{$package.product_id}">
-                            Услуга #{$package.product_id} {if $package.domain != ""}
+                            {$LANG.DomainManager_service} #{$package.product_id} {if $package.domain != ""}
                                 - {$package.domain}
                             {/if}
                         </a>
                     </h4>
                     <div class="header-actions">
-                        <div class="badge badge-success">Зоны: <span>
+                        <div class="badge badge-success">{$LANG.DomainManager_zone} <span>
                              {$package.domain_count} /{if $package.domain_zone_limit eq -1}
                                     <span>∞</span>
                                 {else}
@@ -489,7 +489,7 @@
                                 data-limit="{$package.domain_zone_filter}"
                                 data-rel-id="{$package.product_id}"
                                 data-rel-type="1">
-                            Добавить новую зону
+                            {$LANG.DomainManager_add_zone}
                         </button>
                     </div>
                 </div>
@@ -501,18 +501,18 @@
                                     <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
                                     <a href="/?m=DomainManager&api=delete&domain={$domain}"
                                        style="float: right;padding-left: 10px;"
-                                       title="Удалить домен">
+                                       title="{$LANG.DomainManager_delete_zone}">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                     <a href="/?m=DomainManager&api=edit&domain={$domain}"
                                        style="float: right;padding-left: 10px;"
-                                       title="Редактирование dns записей">
+                                       title="{$LANG.DomainManager_edit_zone}">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 </li>
                                 {foreachelse}
                                 <li>
-                                    Вы ещё не добавили не одного домена
+                                    {$LANG.DomainManager_empty_zones}
                                 </li>
                             {/foreach}
                         </ul>
@@ -525,13 +525,14 @@
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <a class="accordion-toggle" data-toggle="collapse" href="#collapse{$package.addon_id}">
-                            Услуга #{$package.product_id} Дополнение #{$package.addon_id} {if $package.domain != ""}
+                            {$LANG.DomainManager_service} #{$package.product_id} {$LANG.DomainManager_addon}
+                            #{$package.addon_id} {if $package.domain != ""}
                                 - {$package.domain}
                             {/if}
                         </a>
                     </h4>
                     <div class="header-actions">
-                        <div class="badge badge-success">Зоны:
+                        <div class="badge badge-success">{$LANG.DomainManager_zone}
                             <span>
                                 {$package.domain_count} /
                                 {if $package.domain_zone_limit eq -1}
@@ -548,7 +549,7 @@
                                 data-rel-id="{$package.addon_id}"
                                 data-rel-type="2"
                         >
-                            Добавить новую зону
+                            {$LANG.DomainManager_add_zone}
                         </button>
                     </div>
                 </div>
@@ -560,18 +561,77 @@
                                     <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
                                     <a href="/?m=DomainManager&api=delete&domain={$domain}"
                                        style="float: right;padding-left: 10px;"
-                                       title="Удалить домен">
+                                       title="{$LANG.DomainManager_delete_zone}">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                     <a href="/?m=DomainManager&api=edit&domain={$domain}"
                                        style="float: right;padding-left: 10px;"
-                                       title="Редактирование dns записей">
+                                       title="{$LANG.DomainManager_edit_zone}">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 </li>
                                 {foreachelse}
                                 <li>
-                                    Вы ещё не добавили не одного домена
+                                    {$LANG.DomainManager_empty_zones}
+                                </li>
+                            {/foreach}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {/foreach}
+        {foreach key=id item=package from=$domain_packages}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a class="accordion-toggle" data-toggle="collapse" href="#collapse{$package.domain_id}">
+                            {$LANG.DomainManager_domain} #{$package.domain_id} {if $package.domain != ""}
+                                - {$package.domain}
+                            {/if}
+                        </a>
+                    </h4>
+                    <div class="header-actions">
+                        <div class="badge badge-success">{$LANG.DomainManager_zone}
+                            <span>
+                                {$package.domain_count} /
+                                {if $package.domain_zone_limit eq -1}
+                                    <span>∞</span>
+                                {else}
+                                    {$package.domain_zone_limit}
+                                {/if}
+                            </span>
+                        </div>
+                        <button type="button"
+                                style="margin-left: 10px;float: right; margin-top: -2px;margin-bottom: -2px;"
+                                class="btn btn-primary btn-sm" data-toggle="modal" data-target="#AddZoneModal"
+                                data-limit="{$package.domain_zone_filter}"
+                                data-rel-id="{$package.domain_id}"
+                                data-rel-type="3"
+                        >
+                            {$LANG.DomainManager_add_zone}
+                        </button>
+                    </div>
+                </div>
+                <div id="collapse{$package.domain_id}" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <ul class="panel-list list-info">
+                            {foreach  item=domain from=$package.package_domains}
+                                <li>
+                                    <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
+                                    <a href="/?m=DomainManager&api=delete&domain={$domain}"
+                                       style="float: right;padding-left: 10px;"
+                                       title="{$LANG.DomainManager_delete_zone}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    <a href="/?m=DomainManager&api=edit&domain={$domain}"
+                                       style="float: right;padding-left: 10px;"
+                                       title="{$LANG.DomainManager_edit_zone}">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </li>
+                                {foreachelse}
+                                <li>
+                                    {$LANG.DomainManager_empty_zones}
                                 </li>
                             {/foreach}
                         </ul>
@@ -587,14 +647,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="AddZoneModalLabel">Добавление зоны</h5>
+                <h5 class="modal-title" id="AddZoneModalLabel">{$LANG.DomainManager_added_zone}</h5>
             </div>
             <form id="form_add_zone" method="POST" action="/?m=DomainManager">
                 <input name="rel_id" type="hidden" value="">
                 <input name="rel_type" type="hidden" value="">
                 <div class="modal-body" style="display: flow-root;">
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3" for="zone_name">Домен</label>
+                        <label class="control-label col-sm-3" for="zone_name">{$LANG.DomainManager_domain}</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" id="zone_name" name="zone_name" value="" required=""
                                    pattern="(.*\.)+.+">
@@ -602,34 +662,36 @@
                     </div>
                     <div class="form-group" style="height: 30px;" id="zone_limit_desk">
                         <label class="control-label col-sm-3" for="zone_limit_desk"></label>
-                        <div class="col-sm-7" id="zone_limit" data-text="Разрешены только зоны: %s">
+                        <div class="col-sm-7" id="zone_limit" data-text="{$LANG.DomainManager_allow_domain}">
                         </div>
                     </div>
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3" for="create_root_record">Создать @</label>
+                        <label class="control-label col-sm-3"
+                               for="create_root_record">{$LANG.DomainManager_create_main}</label>
                         <div class="col-sm-7">
                             <input type="checkbox" id="create_root_record" name="create_root_record" value="1">
                         </div>
                     </div>
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3" for="create_www_record">Создать www</label>
+                        <label class="control-label col-sm-3"
+                               for="create_www_record">{$LANG.DomainManager_create_www}</label>
                         <div class="col-sm-7">
                             <input type="checkbox" id="create_www_record" name="create_www_record" value="1">
                         </div>
                     </div>
                     <div id="selected_ip" class="form-group" style="height: 30px;display: none">
-                        <label class="control-label col-sm-3" for="ip">ip</label>
+                        <label class="control-label col-sm-3" for="ip">{$LANG.DomainManager_ip}</label>
                         <div class="col-sm-7">
                             <select class="form-control" id="ip" name="ip">
                                 {foreach from=$ip_list item=$ip}
                                     <option value="{$ip}">{$ip}</option>
                                 {/foreach}
-                                <option value="other">Другой</option>
+                                <option value="other">{$LANG.DomainManager_other_ip_selected}</option>
                             </select>
                         </div>
                     </div>
                     <div id="custom_ip" class="form-group" style="height: 30px; display: none">
-                        <label class="control-label col-sm-3" for="custom_ip">Свой ip</label>
+                        <label class="control-label col-sm-3" for="custom_ip">{$LANG.DomainManager_other_ip}</label>
                         <div class="col-sm-7">
                             {literal}
                                 <input class="form-control" type="text" id="custom_ip" name="custom_ip" value=""
@@ -639,8 +701,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
-                    <input type="submit" class="btn btn-success" value="Добавить домен">
+                    <button type="button" class="btn btn-secondary"
+                            data-dismiss="modal">{$LANG.DomainManager_close_modal}</button>
+                    <input type="submit" class="btn btn-success" value="{$LANG.DomainManager_add_zone_modal}">
                 </div>
             </form>
         </div>

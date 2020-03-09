@@ -35,6 +35,7 @@
                         <option disabled selected value="">Не выбрано</option>
                         <option value="1">Продукт</option>
                         <option value="2">Дополнение</option>
+                        <option value="3">Домен</option>
                     </select>
                 </div>
             </div>

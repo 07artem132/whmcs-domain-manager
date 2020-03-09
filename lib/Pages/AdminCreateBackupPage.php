@@ -10,6 +10,7 @@ namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\BackupController;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception\PowerDnsClientException;
 use WHMCS\View\Menu\MenuFactory;
@@ -31,10 +32,12 @@ class AdminCreateBackupPage implements PageInterface
 
         if (!array_key_exists('domain', $_GET)) {
             file_put_contents(ModuleConfig::geTempPath() . '/all-domain-backup_' . date('Y-m-d H-i') . '.json', $backup->create(null, $server_error));
+            LogController::addSuccess(__CLASS__, 'создана ручная резервная копия всех зон, adminid->' . $_SESSION['adminid'] . ', server_error->' . $server_error);
             redir('module=DomainManager&action=backup_result&date=' . urlencode(date('Y-m-d H-i')) . '&error=' . $server_error, 'addonmodules.php');
         }
 
         file_put_contents(ModuleConfig::geTempPath() . '/' . $_GET['domain'] . '-backup_' . date('Y-m-d H-i') . '.json', $backup->create($_GET['domain'], $server_error, $_GET['server_id']));
+        LogController::addSuccess(__CLASS__, 'создана ручная резервная зоны "' . $_GET['domain'] . '", adminid->' . $_SESSION['adminid'] . ', server_error->' . $server_error . ', server_id->' . $_GET['server_id']);
         redir('module=DomainManager&action=backup_result&domain=' . $_GET['domain'] . '&date=' . urlencode(date('Y-m-d H-i')) . '&error=' . $server_error, 'addonmodules.php');
     }
 

@@ -46,7 +46,9 @@
                         </a>
                     </td>
                     <td>
-                        <a href="addonmodules.php?module=DomainManager&domain={$smarty.get.domain}&server_id={$smarty.get.server_id}&type={$record['type']}&name={$record['name']}&action=domain_delete_record">
+                        <a href="addonmodules.php?module=DomainManager&domain={$smarty.get.domain}&server_id={$smarty.get.server_id}&type={$record['type']}&name={$record['name']}&action=domain_delete_record"
+                           onClick="return window.confirm('Вы точно хотите удалить запись {$record['name']} типа {$record['type']} ?');"
+                        >
                             <img src="images/delete.gif" width="16" height="16" border="0">
                         </a>
                     </td>

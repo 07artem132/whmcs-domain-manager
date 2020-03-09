@@ -8,6 +8,8 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Models;
 
+use WHMCS\Database\Capsule;
+use WHMCS\Domain\Domain;
 use WHMCS\Model\AbstractModel;
 use WHMCS\Service\Addon;
 use WHMCS\Service\Service;
@@ -43,30 +45,43 @@ class DomainPackage extends AbstractModel
         return ServerModel::findOrFail(PackageModel::findOrFail($this->package_id)->server_id)->name;
     }
 
-    public function getClientIdAttribute(): string
+    public function getClientIdAttribute(): int
     {
-        $package = PackageModel::findOrFail($this->package_id);
-        switch ($package->rel_type) {
+        switch ($this->rel_type) {
             case 1:
-                return Service::findOrFail($this->rel_id)->userid;
+                return (int)Service::findOrFail($this->rel_id)->userid;
             case 2:
-                return Addon::findOrFail($this->rel_id)->userid;
+                return (int)Addon::findOrFail($this->rel_id)->userid;
+            case 3:
+                return (int)Domain::findOrFail($this->rel_id)->userid;
         }
     }
 
     public function getProductNameAttribute(): string
     {
-        return PackageModel::findOrFail($this->package_id)->rel_product;
+        switch ($this->rel_type) {
+            case 1:
+                $rel_id = Service::findOrFail($this->rel_id)->packageid;
+                break;
+            case 2:
+                $rel_id = Addon::findOrFail($this->rel_id)->addonid;
+                break;
+            case 3:
+                $rel_id = Capsule::table('tbldomainpricing')->where('extension', '.' . Domain::findOrFail($this->rel_id)->tld)->first()->id;
+                break;
+        }
+        return PackageRelative::where('rel_id', $rel_id)->where('rel_type', $this->rel_type)->firstOrFail()->full_text;
     }
 
     public function getServiceUrlAttribute(): string
     {
-        $package = PackageModel::findOrFail($this->package_id);
-        switch ($package->rel_type) {
+        switch ($this->rel_type) {
             case 1:
                 return 'clientsservices.php?productselect=' . $this->rel_id;
             case 2:
                 return 'clientsservices.php?aid=' . $this->rel_id;
+            case 3:
+                return 'clientsdomains.php?id=' . $this->rel_id;
         }
     }
 }

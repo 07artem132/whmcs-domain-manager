@@ -28,11 +28,11 @@
                     <td>
                         {$log.module}
                     </td>
-                    <td>
+                    <td style="word-break: break-all">
                         {$log.message}
                     </td>
                     <td>
-                        {$log.create_at}
+                        {$log->created_at}
                     </td>
                 </tr>
             {/foreach}

@@ -19,7 +19,7 @@ class AdminLogPage implements PageInterface
 
     function __construct()
     {
-        $this->vars['logs'] = LogModel::all();
+        $this->vars['logs'] = LogModel::orderBy('id', 'desc')->get();
     }
 
     /**

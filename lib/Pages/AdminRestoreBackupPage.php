@@ -10,6 +10,7 @@ namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\BackupController;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
 use WHMCS\View\Menu\MenuFactory;
@@ -35,9 +36,10 @@ class AdminRestoreBackupPage implements PageInterface
                 $backup = json_decode(file_get_contents(ModuleConfig::geTempPath() . '/' . $_FILES['backup']['name']), true);
                 $backupController = new BackupController();
                 $backupController->restore($backup, $server_error);
+                LogController::addSuccess(__CLASS__, 'Зона(ы) были восстановлены из резервной копии, adminid->' . $_SESSION['adminid'] . ', server_error->' . $server_error);
                 redir('module=DomainManager&action=backup_restore_result&error=' . $server_error, 'addonmodules.php');
             } else {
-                dd(0);
+                dd('Ошибка при загрузке файла, возможно атака');
             }
         }
     }

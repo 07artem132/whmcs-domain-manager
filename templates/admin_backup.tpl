@@ -29,7 +29,7 @@
             </div>
             <div class="col-md-6">
                 <label class="info_text" for="limit_remote_backup">-1 =
-                    неограниченно, более старые будут удалены.</label>
+                    неограниченно, более старые будут удалены. (Не работает если лимит локальных установлен в 0)</label>
             </div>
             <div class="col-md-3 text-right title">
                 <label for="backup_local_limit">Лимит локальных копий:</label>
@@ -42,7 +42,7 @@
             </div>
             <div class="col-md-6">
                 <label class="info_text" for="backup_local_limit">-1 =
-                    неограниченно, более старые будут удалены.</label>
+                    неограниченно, более старые будут удалены. (Минимум 1 если включена выгрузка)</label>
             </div>
             <div class="col-md-3 text-right title">
                 <label for="upload_backup">Выгрузка резервных копий:</label>
@@ -140,7 +140,18 @@
                 <div>
                     <select class="form-control" name="server_type" id="server_type"
                     >
-                        <option value="ftp">FTP</option>
+                        <option value="ftp"
+                                {if $server_type eq 'ftp'}
+                                    selected
+                                {/if}
+                        >FTP
+                        </option>
+                        <option value="sftp"
+                                {if $server_type eq 'sftp'}
+                                    selected
+                                {/if}
+                        >SFTP
+                        </option>
                     </select>
                 </div>
             </div>

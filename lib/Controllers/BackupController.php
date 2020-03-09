@@ -33,6 +33,13 @@ class BackupController
                         $backup[$domainFormatted . ':' . $server->id] = $pdns->DomainRecordList($domainFormatted);
                     }
                 } catch (Throwable $e) {
+                    LogController::addError(
+                        __CLASS__,
+                        'Во время создания резервной копии возникла ошибка, adminid->' . $_SESSION['adminid'] .
+                        ', server_id->' . $server->id .
+                        ', domain->' . $domain->name,
+                        $e
+                    );
                     $server_error++;
                 }
             }
@@ -42,6 +49,13 @@ class BackupController
                 $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
                 $backup[$domain . ':' . $server_id] = $pdns->DomainRecordList($domain);
             } catch (Throwable $e) {
+                LogController::addError(
+                    __CLASS__,
+                    'Во время создания резервной копии возникла ошибка, adminid->' . $_SESSION['adminid'] .
+                    ', server_id->' . $server_id .
+                    ', domain->' . $domain,
+                    $e
+                );
                 $server_error++;
             }
         }
@@ -53,20 +67,26 @@ class BackupController
      * @param array $backup
      * @param int $server_error
      */
-    function restore(array $backup, int &$server_error = 0)
+    function restore(array $backup, int &$server_error = 0): void
     {
         foreach ($backup as $domain_server => $records) {
+            list($domain, $server_id) = explode(':', $domain_server);
             try {
-                list($domain, $server_id) = explode(':', $domain_server);
 
                 $server = ServerModel::findOrFail($server_id);
 
                 $PowerDNS = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
                 $exitsRecord = $PowerDNS->DomainRecordList($domain);
-
                 $PowerDNS->DomainRecordsDelete($domain, $exitsRecord);
                 $PowerDNS->DomainRecordsCreate($domain, $records);
             } catch (Throwable $e) {
+                LogController::addError(
+                    __CLASS__,
+                    'Во время восстановления из резервной копии возникла ошибка, adminid->' . $_SESSION['adminid'] .
+                    ', server_id->' . $server_id .
+                    ', domain->' . $domain,
+                    $e
+                );
                 $server_error++;
             }
         }

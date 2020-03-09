@@ -95,6 +95,7 @@ class InstallController
                     $table->increments('id');
                     $table->string('name');
                     $table->ipAddress('ip');
+                    $table->unsignedSmallInteger('port');
                     $table->string('token');
                     $table->text('ns_list');
                     $table->boolean('status');
@@ -118,8 +119,8 @@ class InstallController
                     /** @var Blueprint $table */
                     $table->increments('id');
                     $table->string('title');
-                    $table->unsignedSmallInteger('rel_id');
-                    $table->unsignedSmallInteger('rel_type');
+                    //  $table->unsignedSmallInteger('rel_id');
+                    //   $table->unsignedSmallInteger('rel_type');
                     $table->string('domain_zone_filter');
                     $table->unsignedInteger('server_id');
                     $table->smallInteger('domain_zone_limit');
@@ -156,6 +157,7 @@ class InstallController
                     $table->increments('id');
                     $table->text('domain');
                     $table->unsignedInteger('rel_id');
+                    $table->unsignedInteger('rel_type');
                     $table->unsignedInteger('package_id');
                     $table->timestamps();
                 });
@@ -164,6 +166,28 @@ class InstallController
             return array(
                 'status' => 'error',
                 'description' => sprintf('Ошибка при создании таблицы: %s , %s', 'mod_addon_domain_manager_domain_package', $e->getMessage())
+            );
+        }
+        return [];
+    }
+
+    public static function createTablePackageToRelative()
+    {
+        try {
+            if (!Capsule::schema()->hasTable('mod_addon_domain_manager_package_relative')) {
+                Capsule::schema()->create('mod_addon_domain_manager_package_relative', function ($table) {
+                    /** @var Blueprint $table */
+                    $table->increments('id');
+                    $table->unsignedInteger('package_id');
+                    $table->unsignedInteger('rel_id');
+                    $table->unsignedInteger('rel_type');
+                    $table->timestamps();
+                });
+            }
+        } catch (Exception $e) {
+            return array(
+                'status' => 'error',
+                'description' => sprintf('Ошибка при создании таблицы: %s , %s', 'mod_addon_domain_manager_package_relative', $e->getMessage())
             );
         }
         return [];

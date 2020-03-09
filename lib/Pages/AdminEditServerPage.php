@@ -8,6 +8,7 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -26,8 +27,10 @@ class AdminEditServerPage implements PageInterface
             $server->name = $_POST['server_name'];
             $server->ip = $_POST['ip'];
             $server->token = $_POST['token'];
+            $server->port = $_POST['port'];
             $server->ns_list = explode("\r\n", $_POST['ns']);
             $server->saveOrFail();
+            LogController::addSuccess(__CLASS__, 'изменение конфигурации сервера, adminid->' . $_SESSION['adminid'] . ', server_id->' . $_GET['id']);
             redir('module=DomainManager&action=servers', 'addonmodules.php');
         }
         $this->vars['server'] = ServerModel::findOrFail($_GET['id']);

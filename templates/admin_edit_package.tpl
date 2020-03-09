@@ -1,3 +1,4 @@
+<script src="/modules/addons/DomainManager/templates/js/shared/bootstrap-multiselect.js"></script>
 {if !empty($smarty.get.error)}
     <div class="alert  alert-danger" style="margin-top: 10px" role="alert">{$smarty.get.error}</div>
 {/if}
@@ -22,11 +23,19 @@
             </div>
             <div class="col-md-3">
                 <div>
-                    <select class="form-control" name="rel_id" id="rel_id" required>
-                        {foreach item=$associate from=$associateList}
-                            <option value="{$associate.id}" {if $package.rel_id === $associate.id} selected{/if}>
-                                {$associate.text}
-                            </option>
+                    <select class="form-control" name="rel_id[]" id="rel_id" multiple="multiple" required>
+                        {foreach key=$associateType item=$associateGroupItems from=$associateList}
+                            {foreach key=$associateKey item=$associateItems from=$associateGroupItems}
+                                <optgroup label="{$associateKey}">
+                                    {foreach  item=$associateItem from=$associateItems}
+                                        <option value="{$associateItem.id}"
+                                                {if $associateItem.selected eq true}
+                                                    selected
+                                                {/if}
+                                        >{$associateItem.text}</option>
+                                    {/foreach}
+                                </optgroup>
+                            {/foreach}
                         {/foreach}
                     </select>
                 </div>
@@ -220,3 +229,17 @@
         </div>
     </form>
 </fieldset>
+<script>
+    $("#rel_id").multiselect({
+        enableClickableOptGroups: true,
+        enableCollapsibleOptGroups: true,
+        enableFiltering: true,
+        includeSelectAllOption: true,
+        selectAllText: 'Выбрать все',
+        numberDisplayed: 1,
+        buttonWidth: '293px',
+        maxHeight: 400,
+        filterPlaceholder: 'Поиск',
+        nonSelectedText: 'Не выбрано'
+    });
+</script>

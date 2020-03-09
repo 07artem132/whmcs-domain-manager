@@ -1,3 +1,4 @@
+<script src="/modules/addons/DomainManager/templates/js/shared/bootstrap-multiselect.js"></script>
 <fieldset>
     <br/>
     <h3>Общие настройки</h3>
@@ -19,10 +20,15 @@
             </div>
             <div class="col-md-3">
                 <div>
-                    <select class="form-control" name="rel_id" id="rel_id" required>
-                        <option disabled selected value="">Не выбрано</option>
-                        {foreach item=$associate from=$associateList}
-                            <option value="{$associate.id}">{$associate.text}</option>
+                    <select class="form-control" name="rel_id[]" id="rel_id" multiple="multiple" required>
+                        {foreach key=$associateType item=$associateGroupItems from=$associateList}
+                            {foreach key=$associateKey item=$associateItems from=$associateGroupItems}
+                                <optgroup label="{$associateKey}">
+                                    {foreach  item=$associateItem from=$associateItems}
+                                        <option value="{$associateItem.id}">{$associateItem.text}</option>
+                                    {/foreach}
+                                </optgroup>
+                            {/foreach}
                         {/foreach}
                     </select>
                 </div>
@@ -214,3 +220,17 @@
         </div>
     </form>
 </fieldset>
+<script>
+    $("#rel_id").multiselect({
+        enableClickableOptGroups: true,
+        enableCollapsibleOptGroups: true,
+        enableFiltering: true,
+        includeSelectAllOption: true,
+        selectAllText: 'Выбрать все',
+        numberDisplayed: 1,
+        buttonWidth: '293px',
+        maxHeight: 400,
+        filterPlaceholder: 'Поиск',
+        nonSelectedText: 'Не выбрано'
+    });
+</script>

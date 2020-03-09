@@ -37,7 +37,9 @@
                     </td>
                     <td>
                         <a href="addonmodules.php?module=DomainManager&action=remove_blacklist&id={$domain.id}"
-                           title="Удалить домен">
+                           title="Удалить домен"
+                           onClick="return window.confirm('Вы точно хотите удалить домен {$domain.domain} из черного списка ?');"
+                        >
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>

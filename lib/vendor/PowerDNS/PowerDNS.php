@@ -112,6 +112,11 @@ class PowerDNS
         return;
     }
 
+    /**
+     * @param string $domain
+     * @param array $records
+     * @throws PowerDnsClientException
+     */
     public function DomainRecordsCreate(string $domain, array $records): void
     {
 
@@ -232,6 +237,8 @@ class PowerDNS
             $array['rrsets'][$i]['name'] = idn_to_ascii($array['rrsets'][$i]['name']);
             $array['rrsets'][$i]['changetype'] = 'DELETE';
         }
+
+        $array['rrsets'] = array_values($array['rrsets']);
 
         return json_encode($array);
     }

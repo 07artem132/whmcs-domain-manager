@@ -52,7 +52,7 @@ class AdminAreaMenu extends MenuFactory
             ],
             [
                 "name" => "package",
-                "label" => 'Пакеты услугы',
+                "label" => 'Пакеты услуг',
                 "uri" => ModuleConfig::getModuleLink() . "&action=package",
                 "order" => 4,
                 "attributes" => [

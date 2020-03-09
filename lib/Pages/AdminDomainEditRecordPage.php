@@ -9,6 +9,7 @@
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use Throwable;
+use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\ServerModel;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -27,7 +28,7 @@ class AdminDomainEditRecordPage implements PageInterface
     {
         $server = ServerModel::findOrFail($_GET['server_id']);
         try {
-            $PowerDNS = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+            $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
             $records = collect($PowerDNS->DomainRecordList($_GET['domain']));
             $record_index = $records->search(function ($item, $key) {
                 return $item['type'] === $_GET['type'] && $item['name'] === $_GET['name'];
@@ -39,11 +40,27 @@ class AdminDomainEditRecordPage implements PageInterface
             }
             $this->vars['record'] = $record;
         } catch (PowerDnsClientException $e) {
+            LogController::addError(
+                __CLASS__,
+                'Не удалось загрузить из за ошибки, домен->' . $_GET['domain'] .
+                ', adminid->' . $_SESSION['adminid'] .
+                ', record_name->' . $_GET['name'] .
+                ', type->' . $_GET['type'],
+                $e
+            );
             $this->templateName = 'admin_custom_error.tpl';
             $this->vars['message'] = 'Не удалось из за ошибки:' . $e->getMessage() . ' ' . get_class($e);
             $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=record_list&server_id=' . $_GET['server_id'] . '&domain=' . $_GET['domain'];
             return;
         } catch (Throwable $e) {
+            LogController::addError(
+                __CLASS__,
+                'Не удалось загрузить из за ошибки, домен->' . $_GET['domain'] .
+                ', adminid->' . $_SESSION['adminid'] .
+                ', record_name->' . $_GET['name'] .
+                ', type->' . $_GET['type'],
+                $e
+            );
             $this->templateName = 'admin_custom_error.tpl';
             $this->vars['message'] = 'Не удалось из за ошибки:' . $e->response . ' ' . $e->getMessage() . ' ' . get_class($e);
             $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=record_list&server_id=' . $_GET['server_id'] . '&domain=' . $_GET['domain'];
@@ -53,7 +70,7 @@ class AdminDomainEditRecordPage implements PageInterface
         if ($this->isRequestMethod('POST')) {
             $server = ServerModel::findOrFail($_POST['server_id']);
             try {
-                $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $pdns->DomainRecordCreate(
                     $_POST['domain'],
                     $_POST['record_name'],
@@ -63,18 +80,40 @@ class AdminDomainEditRecordPage implements PageInterface
                         return ['content' => $item, 'disabled' => false];
                     })->toArray()
                 );
+                LogController::addSuccess(
+                    __CLASS__,
+                    'Запись для домена ' . $_POST['domain'] . ' изменена, adminid->' . $_SESSION['adminid'] .
+                    ', record_name->' . $_POST['record_name'] .
+                    ', type->' . $_POST['type'] .
+                    ', records->' . $_POST['record']
+                );
+                redir('module=DomainManager&action=record_list&server_id=' . $_POST['server_id'] . '&domain=' . $_POST['domain'], 'addonmodules.php');
             } catch (DomainEditNotMatchDomainFromUrlException $e) {
-                $this->templateName = 'admin_custom_error.tpl';
-                $this->vars['message'] = 'Не удалось создать так как имя записи не соответствует целевому домену (на конце записи должна быть точка)';
+                LogController::addError(
+                    __CLASS__,
+                    'Не удалось изменить так как имя записи не соответствует целевому домену (на конце записи должна быть точка), домен->' . $_POST['domain'] .
+                    ', adminid->' . $_SESSION['adminid'] .
+                    ', record_name->' . $_POST['record_name'] .
+                    ', type->' . $_POST['type'] .
+                    ', records->' . $_POST['record'],
+                    $e
+                );
+                $this->vars['message'] = 'Не удалось изменить так как имя записи не соответствует целевому домену (на конце записи должна быть точка)';
                 $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=record_list&server_id=' . $_POST['server_id'] . '&domain=' . $_POST['domain'];
-                return;
             } catch (Throwable $e) {
-                $this->templateName = 'admin_custom_error.tpl';
+                LogController::addError(
+                    __CLASS__,
+                    'Не удалось изменить из за ошибки, домен->' . $_POST['domain'] .
+                    ', adminid->' . $_SESSION['adminid'] .
+                    ', record_name->' . $_POST['record_name'] .
+                    ', type->' . $_POST['type'] .
+                    ', records->' . $_POST['record'],
+                    $e
+                );
                 $this->vars['message'] = 'Не удалось из за ошибки:' . $e->response . ' ' . $e->getMessage() . ' ' . get_class($e);
                 $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=record_list&server_id=' . $_POST['server_id'] . '&domain=' . $_POST['domain'];
-                return;
             }
-            redir('module=DomainManager&action=record_list&server_id=' . $_POST['server_id'] . '&domain=' . $_POST['domain'], 'addonmodules.php');
+            $this->templateName = 'admin_custom_error.tpl';
         }
     }
 

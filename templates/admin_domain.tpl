@@ -76,7 +76,9 @@
                     </td>
                     <td>
                         <a href="addonmodules.php?module=DomainManager&action=restore_last_backup&server_id={$domain.server_id}&domain={$domain.domain}"
-                           title="Востановить последнюю резервную копию">
+                           title="Востановить последнюю резервную копию"
+                           onClick="return window.confirm('Вы точно хотите востановить последнюю резервную копию для домена {$domain.domain} ?');"
+                        >
                             <i class="fas fa-cloud-upload-alt"></i>
                         </a>
                     </td>
@@ -94,7 +96,9 @@
                     </td>
                     <td>
                         <a href="addonmodules.php?module=DomainManager&action=delete_domain&server_id={$domain.server_id}&domain={$domain.domain}"
-                           title="Удалить домен">
+                           title="Удалить домен"
+                           onClick="return window.confirm('Вы точно хотите удалить домен {$domain.domain} ?');"
+                        >
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>

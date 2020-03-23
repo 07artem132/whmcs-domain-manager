@@ -27,7 +27,7 @@ class BackupController
         if (empty($domain)) {
             foreach (ServerModel::all() as $server) {
                 try {
-                    $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                    $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                     foreach ($pdns->DomainList() as $domain) {
                         $domainFormatted = substr($domain->name, 0, -1);
                         $backup[$domainFormatted . ':' . $server->id] = $pdns->DomainRecordList($domainFormatted);
@@ -46,7 +46,7 @@ class BackupController
         } else {
             try {
                 $server = ServerModel::findOrFail($server_id);
-                $pdns = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $backup[$domain . ':' . $server_id] = $pdns->DomainRecordList($domain);
             } catch (Throwable $e) {
                 LogController::addError(
@@ -75,7 +75,7 @@ class BackupController
 
                 $server = ServerModel::findOrFail($server_id);
 
-                $PowerDNS = new PowerDNS('http://' . $server->ip . '/api/v1/', $server->token);
+                $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $exitsRecord = $PowerDNS->DomainRecordList($domain);
                 $PowerDNS->DomainRecordsDelete($domain, $exitsRecord);
                 $PowerDNS->DomainRecordsCreate($domain, $records);

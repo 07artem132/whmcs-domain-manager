@@ -192,6 +192,11 @@ class PowerDNS
         $array['rrsets'][0]['ttl'] = $ttl;
         $array['rrsets'][0]['changetype'] = 'REPLACE';
         $array['rrsets'][0]['records'] = $records;
+        if (strcasecmp('TXT', $type) === 0) {
+            for ($i = 0; $i < count($array['rrsets'][0]['records']); $i++) {
+                $array['rrsets'][0]['records'][$i]->content = '"' . $array['rrsets'][0]['records'][$i]->content . '"';
+            }
+        }
         return json_encode($array);
     }
 
@@ -288,18 +293,18 @@ class PowerDNS
     public function DomainRecordList(string $domain): array
     {
         $Response = $this->SendHttpRequest('GET', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
-
         for ($i = 0; $i < count($Response->rrsets); $i++) {
-
-            $DomainRecordList[] = [
-                'type' => $Response->rrsets[$i]->type,
-                'name' => idn_to_utf8($Response->rrsets[$i]->name),
-                'records' => $Response->rrsets[$i]->records,
-                'ttl' => $Response->rrsets[$i]->ttl,
-                'comments' => $Response->rrsets[$i]->comments,
-            ];
+            $DomainRecordList[$i]['type'] = $Response->rrsets[$i]->type;
+            $DomainRecordList[$i]['name'] = idn_to_utf8($Response->rrsets[$i]->name);
+            $DomainRecordList[$i]['records'] = $Response->rrsets[$i]->records;
+            $DomainRecordList[$i]['ttl'] = $Response->rrsets[$i]->ttl;
+            $DomainRecordList[$i]['comments'] = $Response->rrsets[$i]->comments;
+            if (strcasecmp('TXT', $DomainRecordList[$i]['type']) === 0) {
+                for ($j = 0; $j < count($DomainRecordList[$j]['records']); $j++) {
+                    $DomainRecordList[$i]['records'][$j]->content = substr(substr($DomainRecordList[$i]['records'][$j]->content, 0, strlen($DomainRecordList[$i]['records'][$j]->content) - 1), 1);
+                }
+            }
         }
-
         return $DomainRecordList;
 
     }

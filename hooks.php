@@ -139,3 +139,25 @@ add_hook('PreRegistrarRequestDelete', 1, function ($vars) {
     }
 
 });
+
+/*
+add_hook("ClientAreaPrimaryNavbar", 900000000, function (MenuItem $primaryNavbar) {
+    global $_LANG;
+    $defaultLanguage = 'russian';
+    $clientLanguage = $_SESSION['Language'];
+
+    include_once(sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $defaultLanguage));
+
+    if (file_exists(sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $clientLanguage))) {
+        include_once sprintf(ModuleConfig::getBaseFullPath() . '/lang/%s.php', $clientLanguage);
+    }
+    $navItem = $primaryNavbar->getChild('Domains');
+
+    if (is_null($navItem)) {
+        return;
+    }
+
+    $navItem->addChild($_LANG['DomainManager_manager_dns'])
+        ->setUri('/?m=DomainManager')
+        ->setOrder(30);
+});*/

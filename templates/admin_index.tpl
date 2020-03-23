@@ -106,7 +106,7 @@
 
                     </div>
                     <div style="border-top: 1px solid #eee; padding-top: 1%; padding-left: 2%; padding-bottom: 1%;">
-                        {if empty($diffLastRunHours)}
+                        {if $diffLastRunHours != null}
                             Резервная копия ещё не выполнялась ни разу!
                         {else}
                             Последний запуск был {$diffLastRunHours} часа(ов) назад

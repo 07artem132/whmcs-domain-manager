@@ -67,7 +67,7 @@
                             PTR
                         </option>
                         <option value="ds"
-                                {if $record.type eq 'TXT'}
+                                {if $record.type eq 'DS'}
                         selected
                                 {/if}>
                             DS

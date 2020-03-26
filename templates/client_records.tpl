@@ -323,7 +323,7 @@
                             >
                         </td>
                         <td data-label="Actions" class="cell-sm-12 cell-actions" style="vertical-align: middle;">
-                            <a href="/?m=DomainManager&api=record_delete&domain={$domain|rawurlencode}&ttl={$recordData.ttl}&name={$recordData.name|rawurlencode}&type={$recordData.type|rawurlencode}&content={$record->content|rawurlencode}"
+                            <a href="/?m=DomainManager&api=record_delete&countRecords={count($recordData.records)}&domain={$domain|rawurlencode}&ttl={$recordData.ttl}&name={$recordData.name|rawurlencode}&type={$recordData.type|rawurlencode}&content={$record->content|rawurlencode}"
                                style="float: right;padding-left: 10px;"
                                title="{$LANG.DomainManager_record_delete}">
                                 <i class="fas fa-trash-alt"></i>

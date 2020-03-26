@@ -194,7 +194,15 @@ class PowerDNS
         $array['rrsets'][0]['records'] = $records;
         if (strcasecmp('TXT', $type) === 0) {
             for ($i = 0; $i < count($array['rrsets'][0]['records']); $i++) {
-                $array['rrsets'][0]['records'][$i]->content = '"' . $array['rrsets'][0]['records'][$i]->content . '"';
+                if (is_array($array['rrsets'][0]['records'][$i])) {
+                    if ($array['rrsets'][0]['records'][$i]['content'][0] != '"') {
+                        $array['rrsets'][0]['records'][$i]['content'] = '"' . $array['rrsets'][0]['records'][$i]['content'] . '"';
+                    }
+                } else {
+                    if ($array['rrsets'][0]['records'][$i]->content[0] != '"') {
+                        $array['rrsets'][0]['records'][$i]->content = '"' . $array['rrsets'][0]['records'][$i]->content . '"';
+                    }
+                }
             }
         }
         return json_encode($array);
@@ -207,6 +215,19 @@ class PowerDNS
         foreach ($array['rrsets'] as &$rrset) {
             $rrset['name'] = idn_to_ascii($rrset['name']);
             $rrset['changetype'] = 'REPLACE';
+            if (strcasecmp('TXT', $rrset['type']) === 0) {
+                for ($i = 0; $i < count($rrset['records']); $i++) {
+                    if (is_array($rrset['records'][$i])) {
+                        if ($rrset['records'][$i]['content'][0] != '"') {
+                            $rrset['records'][$i]['content'] = '"' . $rrset['records'][$i]['content'] . '"';
+                        }
+                    } else {
+                        if ($rrset['records'][$i]->content[0] != '"') {
+                            $rrset['records'][$i]->content = '"' . $rrset['records'][$i]->content . '"';
+                        }
+                    }
+                }
+            }
         }
         return json_encode($array);
     }

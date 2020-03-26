@@ -168,7 +168,25 @@ function DomainManager_clientarea($vars)
         $serverId = $domainPackage->serverId;
         $server = ServerModel::find($serverId);
         $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
-        $pdns->DomainRecordDelete($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], [['content' => $_GET['content']]]);
+        if ($_GET['countRecords'] == 1) {
+            $pdns->DomainRecordDelete($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], [['content' => $_GET['content']]]);
+        } else {
+            $record = collect($pdns->DomainRecordList($_GET['domain']))->filter(function ($item, $key) {
+                if (strcasecmp($_GET['name'], $item['name']) === 0 && strcasecmp($_GET['type'], $item['type']) === 0) {
+                    return true;
+                }
+                return false;
+            })->transform(function ($item, $key) {
+                for ($i = 0; $i < count($item['records']); $i++) {
+                    if (strcasecmp($item['records'][$i]->content, $_GET['content']) === 0) {
+                        unset($item['records'][$i]);
+                    }
+                }
+                return $item;
+            })->first();
+            $pdns->DomainRecordCreate($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], $record['records']);
+        }
+
         LogController::addSuccess(
             'Клиентская область',
             'Была удалена запись для домена ' . $_GET['domain'] .

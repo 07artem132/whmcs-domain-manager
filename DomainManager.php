@@ -202,8 +202,11 @@ function DomainManager_clientarea($vars)
         $server = ServerModel::find($serverId);
         $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
         $records = $pdns->DomainRecordFormatedList($_GET['domain']);
-        foreach ($records as $record_type => $record_list) {
-            array_key_exists($record_type, $recordTypeCount) ? $recordTypeCount[$record_type]++ : $recordTypeCount[$record_type] = 1;
+        $recordTypeCount = array_flip(array_keys($records));
+        foreach ($recordTypeCount as $type => &$count) {
+            $count = collect($records[$type])->sum(function ($item) {
+                return count($item['records']);
+            });
         }
         $package = PackageModel::find($domainPackage->package_id);
         foreach ($recordTypeCount as $recordType => $recordCount) {
@@ -381,12 +384,18 @@ function DomainManager_clientarea($vars)
             $server = ServerModel::find($serverId);
             $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
             $records = array_values($_POST['record']);
-            array_walk_recursive($records, function (&$item, $key) use (&$recordTypeCount) {
+            array_walk_recursive($records, function (&$item, $key) {
                 $item = $key == 'disabled' ? (bool)$item : $item;
-                if ($key == 'type') {
-                    array_key_exists($item, $recordTypeCount) ? $recordTypeCount[$item]++ : $recordTypeCount[$item] = 1;
-                }
             });
+            $recordTypeCount = $records;
+            foreach ($recordTypeCount as $key => $record) {
+                if (array_key_exists($record['type'], $recordTypeCount)) {
+                    $recordTypeCount[$record['type']] += count($record['records']);
+                } else {
+                    $recordTypeCount[$record['type']] = count($record['records']);
+                }
+                unset($recordTypeCount[$key]);
+            }
             array_walk($records, function (&$item, $key) {
                 for ($i = 0; $i < count($item['records']); $i++) {
                     if (is_array($item['records'][$i]['content'])) {
@@ -455,7 +464,9 @@ function DomainManager_clientarea($vars)
         $type_stats = array_flip(array_keys($records));
 
         foreach ($type_stats as $type => &$count) {
-            $count = count($records[$type]);
+            $count = collect($records[$type])->sum(function ($item) {
+                return count($item['records']);
+            });
         }
 
         return array(
@@ -874,7 +885,7 @@ function blacklistCheck(string $domain): ?string
     $result = preg_match($regex, $domain, $matches, PREG_OFFSET_CAPTURE, 0);
 
     if ($result === false) {
-        dd($result);
+
         return sprintf($_LANG['DomainManager_zone_regex_error']);
     }
 

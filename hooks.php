@@ -35,40 +35,73 @@ add_hook('AdminAreaHeadOutput', 99999999, function ($vars) {
 });
 
 add_hook('PreModuleTerminate', 1, function ($vars) {
-    foreach (DomainPackage::where('rel_type', 1)->where('rel_id', $vars['params']['serviceid'])->get() as $item) {
-        try {
-            $server = ServerModel::findOrFail($item->server_id);
-            $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
-            $domainList = collect($pdns->DomainList())->keyBy('name');
-            if ($domainList->has($item->domain . '.')) {
-                $pdns->DomainDelete($item->domain . '.');
+    if ($vars['params']['addonId'] === 0) {
+        foreach (DomainPackage::where('rel_type', 1)->where('rel_id', $vars['params']['serviceid'])->get() as $item) {
+            try {
+                $server = ServerModel::findOrFail($item->server_id);
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+                $domainList = collect($pdns->DomainList())->keyBy('name');
+                if ($domainList->has($item->domain . '.')) {
+                    $pdns->DomainDelete($item->domain . '.');
+                }
+                $item->delete();
+                LogController::addSuccess(
+                    'PreModuleTerminate',
+                    'Домен ' . $item->domain . ' удален, при удалении услуги'
+                );
+            } catch (PowerDnsClientException $e) {
+                LogController::addError(
+                    'PreModuleTerminate',
+                    'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
+                    ', domain->' . $item->domain,
+                    $e
+                );
+                return ['abortcmd' => true];
+            } catch (Throwable $e) {
+                LogController::addError(
+                    'PreModuleTerminate',
+                    'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
+                    ', domain->' . $item->domain,
+                    $e
+                );
+                return ['abortcmd' => true];
             }
-            $item->delete();
-            LogController::addSuccess(
-                'PreModuleTerminate',
-                'Домен ' . $item->domain . ' удален, при удалении услуги'
-            );
-        } catch (PowerDnsClientException $e) {
-            LogController::addError(
-                'PreModuleTerminate',
-                'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
-                ', domain->' . $item->domain,
-                $e
-            );
-            return ['abortcmd' => true];
-        } catch (Throwable $e) {
-            LogController::addError(
-                'PreModuleTerminate',
-                'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
-                ', domain->' . $item->domain,
-                $e
-            );
-            return ['abortcmd' => true];
         }
-    }
-
-    foreach (Service::findOrFail($vars['params']['serviceid'])->addons()->get() as $addon) {
-        foreach (DomainPackage::where('rel_type', 2)->where('rel_id', $addon->id)->get() as $item) {
+        foreach (Service::findOrFail($vars['params']['serviceid'])->addons()->get() as $addon) {
+            foreach (DomainPackage::where('rel_type', 2)->where('rel_id', $addon->id)->get() as $item) {
+                try {
+                    $server = ServerModel::findOrFail($item->server_id);
+                    $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+                    $domainList = collect($pdns->DomainList())->keyBy('name');
+                    if ($domainList->has($item->domain . '.')) {
+                        $pdns->DomainDelete($item->domain . '.');
+                    }
+                    $item->delete();
+                    LogController::addSuccess(
+                        'PreModuleTerminate',
+                        'Домен ' . $item->domain . ' удален, при удалении аддона'
+                    );
+                } catch (PowerDnsClientException $e) {
+                    LogController::addError(
+                        'PreModuleTerminate',
+                        'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
+                        ', domain->' . $item->domain,
+                        $e
+                    );
+                    return ['abortcmd' => true];
+                } catch (Throwable $e) {
+                    LogController::addError(
+                        'PreModuleTerminate',
+                        'Не удалось удалить домен поскольку целевой сервер недоступен, ошибки:' . $e->response . ' ' . $e->getMessage() .
+                        ', domain->' . $item->domain,
+                        $e
+                    );
+                    return ['abortcmd' => true];
+                }
+            }
+        }
+    } else {
+        foreach (DomainPackage::where('rel_type', 2)->where('rel_id', $vars['params']['addonId'])->get() as $item) {
             try {
                 $server = ServerModel::findOrFail($item->server_id);
                 $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);

@@ -184,7 +184,8 @@ function DomainManager_clientarea($vars)
                 }
                 return $item;
             })->first();
-            $pdns->DomainRecordCreate($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], $record['records']);
+
+            $pdns->DomainRecordCreate($_GET['domain'], $_GET['name'], $_GET['type'], $_GET['ttl'], array_values($record['records']));
         }
 
         LogController::addSuccess(

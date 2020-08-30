@@ -31,7 +31,7 @@ class AdminDomainDeleteRecordPage implements PageInterface
                 return $item['type'] === $_GET['type'] && $item['name'] === $_GET['name'];
             });
 
-            if ($delete_record == false) {
+            if ($delete_record === false) {
                 LogController::addError(
                     __CLASS__,
                     'Не удалось удалить из за того что нет совпадений, домен->' . $_GET['domain'] .

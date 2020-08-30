@@ -104,7 +104,6 @@ class PowerDNS
     public function DomainRecordCreate(string $domain, string $name, string $type, int $ttl, array $records): void
     {
         $this->VerifiEditDomain($domain, $name);
-
         $this->AddRequestOption('body', $this->BildJsonRecordCreateOrEdit($name, $type, $ttl, $records));
 
         $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
@@ -321,7 +320,7 @@ class PowerDNS
             $DomainRecordList[$i]['ttl'] = $Response->rrsets[$i]->ttl;
             $DomainRecordList[$i]['comments'] = $Response->rrsets[$i]->comments;
             if (strcasecmp('TXT', $DomainRecordList[$i]['type']) === 0) {
-                for ($j = 0; $j < count($DomainRecordList[$j]['records']); $j++) {
+                for ($j = 0; $j < count($DomainRecordList[$i]['records']); $j++) {
                     $DomainRecordList[$i]['records'][$j]->content = substr(substr($DomainRecordList[$i]['records'][$j]->content, 0, strlen($DomainRecordList[$i]['records'][$j]->content) - 1), 1);
                 }
             }

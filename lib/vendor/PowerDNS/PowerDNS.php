@@ -118,7 +118,6 @@ class PowerDNS
      */
     public function DomainRecordsCreate(string $domain, array $records): void
     {
-
         $this->AddRequestOption('body', $this->BildJsonRecordsCreateOrEdit($records));
 
         $this->SendHttpRequest('PATCH', 'servers/' . $this->server_id . '/zones/' . idn_to_ascii($domain));
@@ -210,7 +209,6 @@ class PowerDNS
     private function BildJsonRecordsCreateOrEdit(array $records): string
     {
         $array['rrsets'] = $records;
-
         foreach ($array['rrsets'] as &$rrset) {
             $rrset['name'] = idn_to_ascii($rrset['name']);
             $rrset['changetype'] = 'REPLACE';
@@ -255,7 +253,7 @@ class PowerDNS
         $array['rrsets'] = $records;
 
         for ($i = 0; $i < count($records); $i++) {
-            if ($array['rrsets'][$i]['type'] == 'SOA' || $array['rrsets'][$i]['type'] == 'NS') {
+            if ($array['rrsets'][$i]['type'] == 'SOA' ) {
                 unset($array['rrsets'][$i]);
                 continue;
             }

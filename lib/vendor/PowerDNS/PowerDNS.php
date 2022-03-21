@@ -40,7 +40,9 @@ class PowerDNS
     /**
      * @var array Параметры/Заголовки которые передаются в месте с запросом ( HEADER)
      */
-    private $request_option = [];
+    private $request_option = [
+
+    ];
 
     /**
      * PowerDNS constructor.
@@ -53,6 +55,13 @@ class PowerDNS
         $this->url = $url;
         $this->key = $key;
         $this->server_id = $server_id;
+        $this->request_option = [
+            'timeout' => 2,
+            'allow_redirects' => false,
+            //'proxy' => '192.168.16.1:10'
+            'headers' => [
+                'X-API-Key' => $this->key
+            ]];
 
         $this->pdns_client = new HTTPClient([
             'base_url' => $this->url,
@@ -253,7 +262,7 @@ class PowerDNS
         $array['rrsets'] = $records;
 
         for ($i = 0; $i < count($records); $i++) {
-            if ($array['rrsets'][$i]['type'] == 'SOA' ) {
+            if ($array['rrsets'][$i]['type'] == 'SOA') {
                 unset($array['rrsets'][$i]);
                 continue;
             }
@@ -448,15 +457,7 @@ class PowerDNS
     private function SendHttpRequest(string $Method, string $Url): stdClass
     {
         try {
-
-            $res = $this->pdns_client->{strtolower($Method)}($this->url.$Url, $this->request_option+[
-                    'timeout' => 2,
-                    'allow_redirects' => false,
-                    //'proxy' => '192.168.16.1:10'
-                    'headers' => [
-                        'X-API-Key' => $this->key
-                    ]
-                ]);
+            $res = $this->pdns_client->{strtolower($Method)}($this->url . $Url, $this->request_option);
         } catch (RequestException $e) {
             $response = $e->getResponse();
             if (empty($response)) {

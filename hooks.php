@@ -1,5 +1,6 @@
 <?php
 
+use Knp\Menu\MenuItem;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Models\DomainPackage;
@@ -174,7 +175,7 @@ add_hook('PreRegistrarRequestDelete', 1, function ($vars) {
 
 });
 
-/*
+
 add_hook("ClientAreaPrimaryNavbar", 900000000, function (MenuItem $primaryNavbar) {
     global $_LANG;
     $defaultLanguage = 'russian';
@@ -194,4 +195,4 @@ add_hook("ClientAreaPrimaryNavbar", 900000000, function (MenuItem $primaryNavbar
     $navItem->addChild($_LANG['DomainManager_manager_dns'])
         ->setUri('/?m=DomainManager')
         ->setOrder(30);
-});*/
+});

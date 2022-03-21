@@ -9,8 +9,10 @@
 namespace WHMCS\Module\Addon\DomainManager\Menu;
 
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
+use WHMCS\View\Menu\MenuFactory;
 
-class AdminAreaDomainSubMenu extends \WHMCS\View\Menu\MenuFactory {
+class AdminAreaDomainSubMenu extends MenuFactory
+{
 	protected $rootItemName = "Domain Manager sub nav bar";
 
 	public function navbar() {

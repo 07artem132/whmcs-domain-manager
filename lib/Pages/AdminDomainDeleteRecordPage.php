@@ -24,7 +24,7 @@ class AdminDomainDeleteRecordPage implements PageInterface
     {
         $server = ServerModel::findOrFail($_GET['server_id']);
         try {
-            $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+            $PowerDNS = new PowerDNS('http://' . $server->ip .':'.$server->port. '/api/v1/', $server->token);
             $records = collect($PowerDNS->DomainRecordList($_GET['domain']));
             $delete_record = $records->search(function ($item, $key) {
                 return $item['type'] === $_GET['type'] && $item['name'] === $_GET['name'];

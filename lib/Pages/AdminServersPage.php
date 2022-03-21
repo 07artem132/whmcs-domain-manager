@@ -19,7 +19,7 @@ class AdminServersPage implements PageInterface
 
     function __construct()
     {
-        $this->vars['serverList'] =ServerModel::all()->toArray();
+        $this->vars['serverList'] = ServerModel::all()->toArray();
     }
 
     function getTemplateName(): string
@@ -35,10 +35,11 @@ class AdminServersPage implements PageInterface
         return $this->vars;
     }
 
-    function getSubMenu():?MenuFactory
+    function getSubMenu(): ?MenuFactory
     {
         return null;
     }
+
     /**
      * @return array
      */
@@ -46,7 +47,7 @@ class AdminServersPage implements PageInterface
     {
         return [
             'Главная' => 'addonmodules.php?module=DomainManager',
-            'Сервера'=>''
+            'Сервера' => ''
         ];
     }
 }

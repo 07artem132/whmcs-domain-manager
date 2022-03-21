@@ -11,7 +11,8 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <label class="info_text" for="backup">Укажите *.domain.zone дабы включить все суб домены домена, domain.zone дабы внести домен или *.zone для добавления зоны в черный список</label>
+                <label class="info_text" for="backup">Укажите *.domain.zone дабы включить все суб домены домена,
+                    domain.zone дабы внести домен или *.zone для добавления зоны в черный список</label>
             </div>
         </div>
         <div class="row text-center"><br/>

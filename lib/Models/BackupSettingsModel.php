@@ -11,12 +11,13 @@ namespace WHMCS\Module\Addon\DomainManager\Models;
 
 use WHMCS\Model\AbstractModel;
 
-class BackupSettingsModel extends AbstractModel {
-	protected $table = "mod_addon_domain_manager_backup_setting";
-	protected $primaryKey = 'id';
-	public $incrementing = true;
-	protected $fillable = [
-	];
+class BackupSettingsModel extends AbstractModel
+{
+    public $incrementing = true;
+    protected $table = "mod_addon_domain_manager_backup_setting";
+    protected $primaryKey = 'id';
+    protected $fillable = [
+    ];
     protected $dates = [
         'created_at',
         'updated_at'

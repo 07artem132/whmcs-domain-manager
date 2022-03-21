@@ -8,7 +8,12 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Models;
 
+use Throwable;
+use WHMCS\Database\Capsule;
 use WHMCS\Model\AbstractModel;
+use WHMCS\Product\Addon;
+use WHMCS\Product\Group;
+use WHMCS\Product\Product;
 
 class PackageModel extends AbstractModel
 {
@@ -21,13 +26,12 @@ class PackageModel extends AbstractModel
         'created_at',
         'updated_at'
     ];
-
     /**
      * Get the comments for the blog post.
      */
     public function items()
     {
-        return $this->hasMany('WHMCS\Module\Addon\DomainManager\Models\PackageRelative', 'package_id', 'id');
+        return $this->hasMany('WHMCS\Module\Addon\DomainManager\Models\PackageRelative','package_id','id');
     }
 
 

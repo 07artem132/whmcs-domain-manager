@@ -500,6 +500,7 @@
                                 <li>
                                     <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
                                     <a href="/?m=DomainManager&api=delete&domain={$domain}"
+                                       onClick="return window.confirm('{$LANG.DomainManager_delete_zone_confirm|replace:'%s':$domain|escape}');"
                                        style="float: right;padding-left: 10px;"
                                        title="{$LANG.DomainManager_delete_zone}">
                                         <i class="fas fa-trash-alt"></i>
@@ -525,8 +526,7 @@
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <a class="accordion-toggle" data-toggle="collapse" href="#collapse{$package.addon_id}">
-                            {$LANG.DomainManager_service} #{$package.product_id} {$LANG.DomainManager_addon}
-                            #{$package.addon_id} {if $package.domain != ""}
+                            {$LANG.DomainManager_service} #{$package.product_id} {$LANG.DomainManager_addon} #{$package.addon_id} {if $package.domain != ""}
                                 - {$package.domain}
                             {/if}
                         </a>
@@ -560,6 +560,7 @@
                                 <li>
                                     <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
                                     <a href="/?m=DomainManager&api=delete&domain={$domain}"
+                                       onClick="return window.confirm('{$LANG.DomainManager_delete_zone_confirm|replace:'%s':$domain|escape}');"
                                        style="float: right;padding-left: 10px;"
                                        title="{$LANG.DomainManager_delete_zone}">
                                         <i class="fas fa-trash-alt"></i>
@@ -620,6 +621,7 @@
                                     <a class="mg-ca-zone" href="https://{$domain}">{$domain}</a>
                                     <a href="/?m=DomainManager&api=delete&domain={$domain}"
                                        style="float: right;padding-left: 10px;"
+                                       onClick="return window.confirm('{$LANG.DomainManager_delete_zone_confirm|replace:'%s':$domain|escape}');"
                                        title="{$LANG.DomainManager_delete_zone}">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
@@ -666,15 +668,13 @@
                         </div>
                     </div>
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3"
-                               for="create_root_record">{$LANG.DomainManager_create_main}</label>
+                        <label class="control-label col-sm-3" for="create_root_record">{$LANG.DomainManager_create_main}</label>
                         <div class="col-sm-7">
                             <input type="checkbox" id="create_root_record" name="create_root_record" value="1">
                         </div>
                     </div>
                     <div class="form-group" style="height: 30px;">
-                        <label class="control-label col-sm-3"
-                               for="create_www_record">{$LANG.DomainManager_create_www}</label>
+                        <label class="control-label col-sm-3" for="create_www_record">{$LANG.DomainManager_create_www}</label>
                         <div class="col-sm-7">
                             <input type="checkbox" id="create_www_record" name="create_www_record" value="1">
                         </div>
@@ -701,8 +701,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-dismiss="modal">{$LANG.DomainManager_close_modal}</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{$LANG.DomainManager_close_modal}</button>
                     <input type="submit" class="btn btn-success" value="{$LANG.DomainManager_add_zone_modal}">
                 </div>
             </form>

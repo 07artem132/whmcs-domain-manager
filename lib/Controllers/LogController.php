@@ -9,7 +9,6 @@
 namespace WHMCS\Module\Addon\DomainManager\Controllers;
 
 
-use Throwable;
 use WHMCS\Module\Addon\DomainManager\Models\LogModel;
 
 class LogController
@@ -20,6 +19,15 @@ class LogController
         $log->status = 1;
         $log->module = self::namespaceToModule($module);
         $log->message = $action;
+        $log->saveOrFail();
+    }
+
+    public static function addError(string $module, string $action, ?\Throwable $e): void
+    {
+        $log = new LogModel();
+        $log->status = 0;
+        $log->module = self::namespaceToModule($module);
+        $log->message = $action . PHP_EOL . self::formatException($e);
         $log->saveOrFail();
     }
 
@@ -56,17 +64,10 @@ class LogController
         return $module;
     }
 
-    public static function addError(string $module, string $action, Throwable $e): void
+    private static function formatException(?\Throwable $e): string
     {
-        $log = new LogModel();
-        $log->status = 0;
-        $log->module = self::namespaceToModule($module);
-        $log->message = $action . PHP_EOL . self::formatException($e);
-        $log->saveOrFail();
-    }
-
-    private static function formatException(Throwable $e): string
-    {
+        if ($e == null)
+            return '';
         return 'message->' . $e->getMessage() . PHP_EOL .
             'trace->' . $e->getTraceAsString();
     }

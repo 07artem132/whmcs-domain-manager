@@ -7,11 +7,10 @@
  */
 
 
+
 namespace WHMCS\Module\Addon\DomainManager\vendor\FTPClient\Exceptions;
 
-use Exception;
-
-class FtpException extends Exception
+class FtpException extends \Exception
 {
 
 }

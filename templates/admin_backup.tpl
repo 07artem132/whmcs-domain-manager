@@ -150,8 +150,7 @@
                                 {if $server_type eq 'sftp'}
                                     selected
                                 {/if}
-                        >SFTP
-                        </option>
+                        >SFTP</option>
                     </select>
                 </div>
             </div>

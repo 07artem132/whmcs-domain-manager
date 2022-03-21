@@ -38,8 +38,7 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <label class="info_text" for="type">Выберите с чем ассоциировать домен (Только если заполнено поле
-                    выше)</label>
+                <label class="info_text" for="type">Выберите с чем ассоциировать домен (Только если заполнено поле выше)</label>
             </div>
             <div class="col-md-3 text-right title">
                 <label for="server">Сервер:</label>

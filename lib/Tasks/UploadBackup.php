@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Tasks;
 
-use Exception;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\TaskInterfaces;
@@ -21,8 +20,9 @@ use WHMCS\Module\Addon\DomainManager\vendor\SSHClient\SftpClient;
 
 class UploadBackup implements TaskInterfaces
 {
-    public $name = 'upload backup';
     private $frequency = '0 * * * *';
+
+    public $name = 'upload backup';
 
     function __construct()
     {
@@ -56,7 +56,7 @@ class UploadBackup implements TaskInterfaces
                         $ftp->connect($settings->server_ip, $settings->server_port);
                         $ftp->login($settings->server_login, $settings->server_password);
                         if (!$ftp->chdir($settings->server_path)) {
-                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new Exception('Не удалось сменить деректорию->' . $settings->server_path));
+                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new \Exception('Не удалось сменить деректорию->' . $settings->server_path));
                             return;
                         }
                         $files = $ftp->nlist();
@@ -64,14 +64,14 @@ class UploadBackup implements TaskInterfaces
                         LogController::addError('Работа с резервными копиями по крону', 'При выгрузке резервной копии возникла ошибка', $e);
                         return;
                     } catch (FtpIsNotDirException $e) {
-                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new Exception('Не удалось сменить деректорию->' . $settings->server_path));
+                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new \Exception('Не удалось сменить деректорию->' . $settings->server_path));
                         return;
                     }
                     foreach ($backups->diff($files) as $file) {
                         try {
                             $ftp->putFromPath(sprintf('%s/%s', ModuleConfig::geBackupPath(), $file));
                         } catch (FtpException $e) {
-                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось загрузить файл (ftp)', new Exception('Не удалось загрузить файл->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $file)));
+                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось загрузить файл (ftp)', new \Exception('Не удалось загрузить файл->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $file)));
                             continue;
                         }
                         echo 'upload->' . $file . PHP_EOL;
@@ -85,7 +85,7 @@ class UploadBackup implements TaskInterfaces
                         $sftp->setCredentials($credentials);
                         $sftp->connect($settings->server_ip, $settings->server_port);
                         $files = $sftp->getFileList($settings->server_path);
-                    } catch (Exception $e) {
+                    } catch (\Exception $e) {
                         LogController::addError('Работа с резервными копиями по крону', 'При выгрузке резервной копии возникла ошибка (sftp)', $e);
                         return;
                     }
@@ -95,8 +95,8 @@ class UploadBackup implements TaskInterfaces
                                 sprintf('%s/%s', ModuleConfig::geBackupPath(), $file),
                                 sprintf('%s/%s', $settings->server_path, $file)
                             );
-                        } catch (Exception $e) {
-                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось выгрузить файл (sftp)', new Exception('Не удалось выгрузить файл->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $file)));
+                        } catch (\Exception $e) {
+                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось выгрузить файл (sftp)', new \Exception('Не удалось выгрузить файл->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $file)));
                             continue;
                         }
                         echo 'upload->' . $file . PHP_EOL;

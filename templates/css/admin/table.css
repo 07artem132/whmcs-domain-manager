@@ -43,6 +43,7 @@ div#tableDomainRecordsList_info {
 }
 
 
+
 div#tableLogsList_length {
     float: left;
 }
@@ -58,6 +59,7 @@ div#tableLogsList_filter {
 div#tableLogsList_info {
     float: left;
 }
+
 
 
 div#tableServersList_length {

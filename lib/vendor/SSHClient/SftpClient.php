@@ -112,18 +112,6 @@ class SftpClient
     }
 
     /**
-     * Enables file size verification.
-     *
-     * @return $this
-     */
-    public function enableFileSizeVerification()
-    {
-        $this->fileSizeVerificationEnabled = true;
-
-        return $this;
-    }
-
-    /**
      * @throws Exception
      */
     public function __destruct()
@@ -132,57 +120,13 @@ class SftpClient
     }
 
     /**
-     * Closes the connection (calls 'exit') and removes the connection resources.
+     * Enables file size verification.
      *
      * @return $this
-     * @throws Exception Invalid connection resource! due to use of validateSshResource.
      */
-    public function close()
+    public function enableFileSizeVerification()
     {
-        if ($this->getSshResource()) {
-            $this->validateSshResource();
-            ssh2_exec($this->getSshResource(), 'logout');
-            $this->setSftpResource(null);
-            $this->setSshResource(null);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Gets the assigned resource used by all ssh methods.
-     *
-     * @return Resource
-     */
-    protected function getSshResource()
-    {
-        return $this->sshResource;
-    }
-
-    /**
-     * Sets the resource created by ssh2_connect used for all ssh methods.
-     *
-     * @param resource $sshResource
-     * @return $this
-     */
-    protected function setSshResource($sshResource)
-    {
-        $this->sshResource = $sshResource;
-
-        return $this;
-    }
-
-    /**
-     * Checks if connection resources are assigned for further use
-     *
-     * @return $this
-     * @throws Exception Invalid connection resource!
-     */
-    protected function validateSshResource()
-    {
-        if ($this->getSshResource() === false || $this->getSshResource() === null) {
-            throw new Exception("Invalid connection resource!");
-        }
+        $this->fileSizeVerificationEnabled = true;
 
         return $this;
     }
@@ -197,6 +141,89 @@ class SftpClient
         $this->fileSizeVerificationEnabled = false;
 
         return $this;
+    }
+
+    /**
+     * Setter for the credentials used for authorization.
+     *
+     * @param Credentials $credentials Credentials object used for authorization
+     * @return $this
+     */
+    public function setCredentials(Credentials $credentials)
+    {
+        $this->credentials = $credentials;
+
+        return $this;
+    }
+
+    /**
+     * Getter of assigned authorization credentials object.
+     *
+     * @return Credentials|null
+     */
+    public function getCredentials()
+    {
+        return $this->credentials;
+    }
+
+    /**
+     * Sets the prefix used for saving of files in the local file system.
+     * Please follow phpDoc of upload, remove and download methods to understand
+     * when in use.
+     *
+     * @param string $prefix Prefix used for saving of files in the local file system
+     * @return $this
+     */
+    public function setLocalPrefix($prefix)
+    {
+        if (is_null($prefix)) {
+            $prefix = '';
+        }
+        $this->localPrefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Gets the prefix used for saving of files in the local file system.
+     * Please follow phpDoc of upload, remove and download methods to understand
+     * when in use.
+     *
+     * @return string
+     */
+    public function getLocalPrefix()
+    {
+        return $this->localPrefix;
+    }
+
+    /**
+     * Sets the prefix used for saving of files in the remote file system.
+     * Please follow phpDoc of upload, remove and download methods to understand
+     * when in use.
+     *
+     * @param string $prefix
+     * @return $this
+     */
+    public function setRemotePrefix($prefix)
+    {
+        if (is_null($prefix)) {
+            $prefix = '';
+        }
+        $this->remotePrefix = $prefix;
+
+        return $this;
+    }
+
+    /**
+     * Gets the prefix used for saving of files in the remote files system.
+     * Please follow phpDoc of upload, remove and download methods to understand
+     * when in use.
+     *
+     * @return string
+     */
+    public function getRemotePrefix()
+    {
+        return $this->remotePrefix;
     }
 
     /**
@@ -236,24 +263,19 @@ class SftpClient
     }
 
     /**
-     * Getter of assigned authorization credentials object.
+     * Closes the connection (calls 'exit') and removes the connection resources.
      *
-     * @return Credentials|null
-     */
-    public function getCredentials()
-    {
-        return $this->credentials;
-    }
-
-    /**
-     * Setter for the credentials used for authorization.
-     *
-     * @param Credentials $credentials Credentials object used for authorization
      * @return $this
+     * @throws Exception Invalid connection resource! due to use of validateSshResource.
      */
-    public function setCredentials(Credentials $credentials)
+    public function close()
     {
-        $this->credentials = $credentials;
+        if ($this->getSshResource()) {
+            $this->validateSshResource();
+            ssh2_exec($this->getSshResource(), 'logout');
+            $this->setSftpResource(null);
+            $this->setSshResource(null);
+        }
 
         return $this;
     }
@@ -298,60 +320,6 @@ class SftpClient
     }
 
     /**
-     * Gets the assigned resource used by all Sftp methods.
-     *
-     * @return Resource
-     */
-    protected function getSftpResource()
-    {
-        return $this->sftpResource;
-    }
-
-    /**
-     * Sets the resource created by ssh2_sftp used for all Sftp methods.
-     *
-     * @param resource $sftpResource
-     * @return $this
-     */
-    protected function setSftpResource($sftpResource)
-    {
-        //fix for https://bugs.php.net/bug.php?id=71376
-        $this->sftpResource = $sftpResource;
-
-        return $this;
-    }
-
-    /**
-     * Gets the prefix used for saving of files in the local file system.
-     * Please follow phpDoc of upload, remove and download methods to understand
-     * when in use.
-     *
-     * @return string
-     */
-    public function getLocalPrefix()
-    {
-        return $this->localPrefix;
-    }
-
-    /**
-     * Sets the prefix used for saving of files in the local file system.
-     * Please follow phpDoc of upload, remove and download methods to understand
-     * when in use.
-     *
-     * @param string $prefix Prefix used for saving of files in the local file system
-     * @return $this
-     */
-    public function setLocalPrefix($prefix)
-    {
-        if (is_null($prefix)) {
-            $prefix = '';
-        }
-        $this->localPrefix = $prefix;
-
-        return $this;
-    }
-
-    /**
      * Attempts to upload a file using SCP protocol
      *
      * @param string $localFilePath [Not affected by locel prefix]
@@ -383,36 +351,6 @@ class SftpClient
         if ($result === false) {
             throw new Exception("Could not upload the file!");
         }
-
-        return $this;
-    }
-
-    /**
-     * Gets the prefix used for saving of files in the remote files system.
-     * Please follow phpDoc of upload, remove and download methods to understand
-     * when in use.
-     *
-     * @return string
-     */
-    public function getRemotePrefix()
-    {
-        return $this->remotePrefix;
-    }
-
-    /**
-     * Sets the prefix used for saving of files in the remote file system.
-     * Please follow phpDoc of upload, remove and download methods to understand
-     * when in use.
-     *
-     * @param string $prefix
-     * @return $this
-     */
-    public function setRemotePrefix($prefix)
-    {
-        if (is_null($prefix)) {
-            $prefix = '';
-        }
-        $this->remotePrefix = $prefix;
 
         return $this;
     }
@@ -712,5 +650,67 @@ class SftpClient
         $sftp_int = intval($sftp);
 
         return file_exists("ssh2.sftp://" . $sftp_int . "/" . $path);
+    }
+
+    /**
+     * Sets the resource created by ssh2_sftp used for all Sftp methods.
+     *
+     * @param resource $sftpResource
+     * @return $this
+     */
+    protected function setSftpResource($sftpResource)
+    {
+        //fix for https://bugs.php.net/bug.php?id=71376
+        $this->sftpResource = $sftpResource;
+
+        return $this;
+    }
+
+    /**
+     * Gets the assigned resource used by all Sftp methods.
+     *
+     * @return Resource
+     */
+    protected function getSftpResource()
+    {
+        return $this->sftpResource;
+    }
+
+    /**
+     * Sets the resource created by ssh2_connect used for all ssh methods.
+     *
+     * @param resource $sshResource
+     * @return $this
+     */
+    protected function setSshResource($sshResource)
+    {
+        $this->sshResource = $sshResource;
+
+        return $this;
+    }
+
+    /**
+     * Gets the assigned resource used by all ssh methods.
+     *
+     * @return Resource
+     */
+    protected function getSshResource()
+    {
+        return $this->sshResource;
+    }
+
+    /**
+     * Checks if connection resources are assigned for further use
+     *
+     * @return $this
+     * @throws Exception Invalid connection resource!
+     */
+    protected function validateSshResource()
+    {
+        if ($this->getSshResource() === false || $this->getSshResource() === null) {
+            throw new Exception("Invalid connection resource!");
+        }
+
+        return $this;
     }
 }

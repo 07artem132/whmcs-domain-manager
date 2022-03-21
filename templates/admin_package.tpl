@@ -50,8 +50,7 @@
                     </td>
                     <td>
                         {foreach from=$package.items item="item"}
-                            {$item->full_text}
-                            <br/>
+                            {$item->full_text}<br/>
                         {/foreach}
                     </td>
                     <td>

@@ -8,8 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\CronExpression;
 
-use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 
 /**
@@ -42,7 +40,7 @@ class MinutesField extends AbstractField
     /**
      * {@inheritDoc}
      *
-     * @param DateTime|DateTimeImmutable &$date
+     * @param \DateTime|\DateTimeImmutable &$date
      * @param string|null $parts
      */
     public function increment(DateTimeInterface &$date, $invert = false, $parts = null)

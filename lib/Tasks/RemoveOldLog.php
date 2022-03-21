@@ -13,8 +13,9 @@ use WHMCS\Module\Addon\DomainManager\Models\LogModel;
 
 class RemoveOldLog implements TaskInterfaces
 {
-    public $name = 'remove old log';
     private $frequency = '0 * * * *';
+
+    public $name = 'remove old log';
 
     function __construct()
     {
@@ -40,7 +41,7 @@ class RemoveOldLog implements TaskInterfaces
         $saveLast = 10;
         $count = LogModel::count();
         if ($count > $saveLast) {
-            $logs = LogModel::skip($saveLast)->orderBy('id', 'desc')->limit(1000)->get();
+            $logs = LogModel::skip($saveLast)->orderBy('id','desc')->limit(1000)->get();
             foreach ($logs as $log) {
                 $log->delete();
             }

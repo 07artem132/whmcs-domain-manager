@@ -5,11 +5,8 @@
  *  Date time: 26.02.2020, 21:09
  *
  */
-
 namespace WHMCS\Module\Addon\DomainManager\Models;
 
-use Exception;
-use Throwable;
 use WHMCS\Database\Capsule;
 use WHMCS\Model\AbstractModel;
 use WHMCS\Product\Addon;
@@ -38,13 +35,13 @@ class PackageRelative extends AbstractModel
                 case 3:
                     $domain = Capsule::table('tbldomainpricing')->where('id', $this->rel_id)->first();
                     if (empty($domain)) {
-                        throw new Exception('Вероятно удален домен');
+                        throw new \Exception('Вероятно удален домен');
                     }
                     return 'Домен\\' . $domain->extension;
                 default:
                     return 'unknown  type';
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             return 'Вероятно удален продукт';
         }
     }

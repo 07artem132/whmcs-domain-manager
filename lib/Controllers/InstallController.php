@@ -119,8 +119,8 @@ class InstallController
                     /** @var Blueprint $table */
                     $table->increments('id');
                     $table->string('title');
-                    //  $table->unsignedSmallInteger('rel_id');
-                    //   $table->unsignedSmallInteger('rel_type');
+                  //  $table->unsignedSmallInteger('rel_id');
+                 //   $table->unsignedSmallInteger('rel_type');
                     $table->string('domain_zone_filter');
                     $table->unsignedInteger('server_id');
                     $table->smallInteger('domain_zone_limit');

@@ -35,7 +35,7 @@ class AdminDomainAddRecordPage implements PageInterface
 
                     $regex = '/.*' . str_replace('.', '\.', $_POST['domain'] . '.') . '$/';
                     if (preg_match($regex, $record_name, $matches, PREG_OFFSET_CAPTURE, 0) !== false) {
-                        if (empty($matches)) $record_name .= '.' . $_POST['domain'] . '.';
+                        if (empty($matches)) $record_name .='.' . $_POST['domain'] . '.';
                     }
                 }
 

@@ -26,9 +26,11 @@ $_LANG['DomainManager_added_zone'] = 'Добавление зоны';
 $_LANG['DomainManager_empty_zones'] = 'Вы ещё не добавили не одного домена';
 $_LANG['DomainManager_edit_zone'] = 'Редактирование dns записей';
 $_LANG['DomainManager_delete_zone'] = 'Удалить домен';
+$_LANG['DomainManager_delete_zone_confirm'] = 'Вы действительно хотите безвозвратно удалить домен \"%s\" ?';
 
 //общее
 $_LANG['DomainManager_close_modal'] = 'Закрыть';
+$_LANG['DomainManager_pdns_unknown_error'] = 'Неизвестная ошибка';
 
 // Управление записями
 $_LANG['DomainManager_manager_dns'] = 'Управление DNS';
@@ -52,6 +54,7 @@ $_LANG['DomainManager_exchange'] = 'Exchange';
 
 //валидация
 $_LANG['DomainManager_domain_edit_not_match_domain'] = 'Вы пытаетесь создать запись с именем домена отличного от текущего (возможно забыли точку на конце).';
+$_LANG['DomainManager_domain_add_record_match_no_valid'] = 'Данные в поле "значения" не корректны, если вы уверены что все правильно свяжитесь с администрацией.';
 $_LANG['DomainManager_zone_not_allowed'] = 'Вы не можете создать домен в этой зоне';
 $_LANG['DomainManager_zone_limit_reached'] = 'Действие невозможно, превышен лимит доменов для пакета.';
 $_LANG['DomainManager_zone_record_limit_reached'] = 'Превышен лимит записи типа %s';

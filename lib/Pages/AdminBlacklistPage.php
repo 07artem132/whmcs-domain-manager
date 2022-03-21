@@ -5,7 +5,6 @@
  *  Date time: 05.01.2020, 17:48
  *
  */
-
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;

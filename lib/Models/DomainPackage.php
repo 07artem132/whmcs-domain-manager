@@ -51,9 +51,9 @@ class DomainPackage extends AbstractModel
             case 1:
                 return (int)Service::findOrFail($this->rel_id)->userid;
             case 2:
-                return (int)Addon::findOrFail($this->rel_id)->userid;
+                return (int) Addon::findOrFail($this->rel_id)->userid;
             case 3:
-                return (int)Domain::findOrFail($this->rel_id)->userid;
+                return (int) Domain::findOrFail($this->rel_id)->userid;
         }
     }
 
@@ -61,16 +61,16 @@ class DomainPackage extends AbstractModel
     {
         switch ($this->rel_type) {
             case 1:
-                $rel_id = Service::findOrFail($this->rel_id)->packageid;
+                $rel_id= Service::findOrFail($this->rel_id)->packageid;
                 break;
             case 2:
-                $rel_id = Addon::findOrFail($this->rel_id)->addonid;
+                $rel_id=  Addon::findOrFail($this->rel_id)->addonid;
                 break;
             case 3:
-                $rel_id = Capsule::table('tbldomainpricing')->where('extension', '.' . Domain::findOrFail($this->rel_id)->tld)->first()->id;
+                $rel_id= Capsule::table('tbldomainpricing')->where('extension', '.' . Domain::findOrFail($this->rel_id)->tld)->first()->id;
                 break;
         }
-        return PackageRelative::where('rel_id', $rel_id)->where('rel_type', $this->rel_type)->firstOrFail()->full_text;
+        return PackageRelative::where('rel_id',$rel_id)->where('rel_type',$this->rel_type)->firstOrFail()->full_text;
     }
 
     public function getServiceUrlAttribute(): string

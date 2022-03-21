@@ -22,13 +22,13 @@
                 <div>
                     <select class="form-control" name="rel_id[]" id="rel_id" multiple="multiple" required>
                         {foreach key=$associateType item=$associateGroupItems from=$associateList}
-                            {foreach key=$associateKey item=$associateItems from=$associateGroupItems}
-                                <optgroup label="{$associateKey}">
-                                    {foreach  item=$associateItem from=$associateItems}
-                                        <option value="{$associateItem.id}">{$associateItem.text}</option>
-                                    {/foreach}
-                                </optgroup>
-                            {/foreach}
+                                {foreach key=$associateKey item=$associateItems from=$associateGroupItems}
+                                    <optgroup label="{$associateKey}">
+                                        {foreach  item=$associateItem from=$associateItems}
+                                            <option value="{$associateItem.id}">{$associateItem.text}</option>
+                                        {/foreach}
+                                    </optgroup>
+                                {/foreach}
                         {/foreach}
                     </select>
                 </div>

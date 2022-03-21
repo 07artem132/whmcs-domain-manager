@@ -20,7 +20,7 @@ class AdminCronPage implements PageInterface
 
     function __construct()
     {
-        $this->vars['lastCronEvent'] = LogModel::where('status', 1)->where('module', 'Работа с резервными копиями по крону')->orderBy('created_at', 'DESC')->first();
+        $this->vars['lastCronEvent']=LogModel::where('status',1)->where('module','Работа с резервными копиями по крону')->orderBy('created_at','DESC')->first();
         $this->vars['cronPath'] = ModuleConfig::getWhmcsRootDir() . '/modules/addons/' . ModuleConfig::getModuleName() . '/cron.php';
     }
 

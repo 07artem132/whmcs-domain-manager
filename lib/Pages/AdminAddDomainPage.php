@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Exception;
 use WHMCS\Database\Capsule;
 use WHMCS\Domain\Domain;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
@@ -71,7 +70,7 @@ class AdminAddDomainPage implements PageInterface
                             ', rel_id->' . $_POST['relid'] .
                             ', domain->' . $_POST['domain'] .
                             ', rel_type->' . $_POST['type'],
-                            new Exception()
+                            new \Exception()
                         );
                         $this->vars['message'] = 'Домен создан однако к сожалению не удалось найти пакет который привязан к целевому продукту. Проверьте правельность указатия типа связи или id сервиса.';
                         $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=domain';

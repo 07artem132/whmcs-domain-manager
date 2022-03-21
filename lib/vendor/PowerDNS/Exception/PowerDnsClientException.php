@@ -8,9 +8,7 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\PowerDNS\Exception;
 
-use Exception;
-
-class PowerDnsClientException extends Exception
+class PowerDnsClientException extends \Exception
 {
     public $response;
 

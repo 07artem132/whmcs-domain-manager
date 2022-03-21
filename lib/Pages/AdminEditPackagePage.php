@@ -9,7 +9,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Throwable;
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
@@ -75,7 +74,7 @@ class AdminEditPackagePage implements PageInterface
                     'Изменение пакета, adminid->' . $_SESSION['adminid'] . ', package_id->' . $_GET['id']
                 );
                 redir('module=DomainManager&action=package', 'addonmodules.php');
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 Capsule::rollBack();
                 LogController::addError(__CLASS__, 'редактирование пакета с ошибкой, adminid->' . $_SESSION['adminid'], $e);
                 $this->vars['message'] = 'Возникла ошибка, детали в логе..';
@@ -91,7 +90,7 @@ class AdminEditPackagePage implements PageInterface
             return $item->rel_type . ':' . $item->rel_id;
         });
 
-        $packageRelativeNotAllow = PackageRelative::where('package_id', '!=', $_GET['id'])->get()->keyBy(function ($item) {
+        $packageRelativeNotAllow = PackageRelative::where('package_id','!=',$_GET['id'])->get()->keyBy(function ($item) {
             return $item->rel_type . ':' . $item->rel_id;
         });
 
@@ -101,7 +100,7 @@ class AdminEditPackagePage implements PageInterface
                 ->orderBy('tblproducts.order', 'ASC')
                 ->orderBy('tblproducts.name', 'ASC')
                 ->select('tblproducts.gid', 'tblproducts.id', 'tblproductgroups.name AS groupname', 'tblproducts.name AS productname')
-                ->get()->groupBy('gid')->flatten()->transform(function ($item, $key) use ($items, $packageRelativeNotAllow) {
+                ->get()->groupBy('gid')->flatten()->transform(function ($item, $key) use ($items,$packageRelativeNotAllow) {
 
                     return [
                         'id' => $item->id,
@@ -114,7 +113,7 @@ class AdminEditPackagePage implements PageInterface
                     return $item['exits'];
                 })->groupBy('groupname')
         ])->merge([
-            'addon' => Addon::all()->transform(function ($item, $key) use ($items, $packageRelativeNotAllow) {
+            'addon' => Addon::all()->transform(function ($item, $key) use ($items,$packageRelativeNotAllow) {
                 return [
                     'id' => 'a' . $item->id,
                     'groupname' => 'Дополнение',
@@ -126,7 +125,7 @@ class AdminEditPackagePage implements PageInterface
                 return $item['exits'];
             })->groupBy('groupname')
         ])->merge([
-            'domain' => collect(Capsule::table('tbldomainpricing')->get())->transform(function ($item, $key) use ($items, $packageRelativeNotAllow) {
+            'domain' => collect(Capsule::table('tbldomainpricing')->get())->transform(function ($item, $key) use ($items,$packageRelativeNotAllow) {
                 return [
                     'id' => 'd' . $item->id,
                     'groupname' => 'Домены',

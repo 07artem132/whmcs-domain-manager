@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\CompressManager;
 
-use Exception;
 use WHMCS\Module\Addon\DomainManager\vendor\CompressManager\Abstracts\CompressManagerFactoryAbstract;
 use WHMCS\Module\Addon\DomainManager\vendor\CompressManager\Interfaces\CompressInterface;
 
@@ -20,13 +19,13 @@ class CompressNoneController extends CompressManagerFactoryAbstract implements C
      * @param string $filename
      * @param string $mode
      * @return boolean
-     * @throws Exception
+     * @throws \Exception
      */
     public function open($filename, $mode = 'wb')
     {
         $this->fileHandler = fopen($filename, $mode);
         if (false === $this->fileHandler) {
-            throw new Exception("Output file is not writable");
+            throw new \Exception("Output file is not writable");
         }
 
         return true;
@@ -54,12 +53,12 @@ class CompressNoneController extends CompressManagerFactoryAbstract implements C
     /**
      * @param $str
      * @return bool|int
-     * @throws Exception
+     * @throws \Exception
      */
     public function write($str)
     {
         if (false === ($bytesWritten = fwrite($this->fileHandler, $str))) {
-            throw new Exception("Writting to file failed! Probably, there is no more free space left?");
+            throw new \Exception("Writting to file failed! Probably, there is no more free space left?");
         }
         return $bytesWritten;
     }

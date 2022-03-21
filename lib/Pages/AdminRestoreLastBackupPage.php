@@ -9,7 +9,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Throwable;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\BackupController;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
@@ -49,7 +48,7 @@ class AdminRestoreLastBackupPage implements PageInterface
 
         try {
             $backup = json_decode($file, true, JSON_THROW_ON_ERROR);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->vars['error'] = 'Ошибка при работе с резервной копией:' . $e->getMessage() . PHP_EOL . $e->getTraceAsString();
             return;
         }
@@ -71,7 +70,7 @@ class AdminRestoreLastBackupPage implements PageInterface
             $this->vars['error'] = 'При работе с резервной копией возникли ошибки, детали в логах.';
             return;
         }
-        LogController::addSuccess('Работа с резервными копиями', 'Резервная копия успешно развернута для домена ' . $_GET['domain']);
+        LogController::addSuccess('Работа с резервными копиями', 'Резервная копия успешно развернута для домена '.$_GET['domain']);
     }
 
     /**

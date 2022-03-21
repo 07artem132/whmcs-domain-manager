@@ -32,7 +32,6 @@ class ModuleConfig
     {
         return self::relativePath;
     }
-
     /**
      * @return string
      */
@@ -64,7 +63,6 @@ class ModuleConfig
     {
         return self::moduleName;
     }
-
     public static function getBaseFullPath(): string
     {
         return self::getWhmcsRootDir() . '/modules/addons/' . self::getModuleName();

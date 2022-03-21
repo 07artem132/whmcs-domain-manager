@@ -28,7 +28,7 @@ class AdminDomainEditRecordPage implements PageInterface
     {
         $server = ServerModel::findOrFail($_GET['server_id']);
         try {
-            $PowerDNS = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+            $PowerDNS = new PowerDNS('http://' . $server->ip .':'.$server->port. '/api/v1/', $server->token);
             $records = collect($PowerDNS->DomainRecordList($_GET['domain']));
             $record_index = $records->search(function ($item, $key) {
                 return $item['type'] === $_GET['type'] && $item['name'] === $_GET['name'];
@@ -70,14 +70,14 @@ class AdminDomainEditRecordPage implements PageInterface
         if ($this->isRequestMethod('POST')) {
             $server = ServerModel::findOrFail($_POST['server_id']);
             try {
-                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+                $pdns = new PowerDNS('http://' . $server->ip .':'.$server->port. '/api/v1/', $server->token);
                 $pdns->DomainRecordCreate(
                     $_POST['domain'],
                     $_POST['record_name'],
                     $_POST['type'],
                     $_POST['record_ttl'],
                     collect(explode("\r\n", $_POST['record']))->transform(function ($item) {
-                        return ['content' => $item, 'disabled' => false];
+                         return ['content' => html_entity_decode($item), 'disabled' => false];
                     })->toArray()
                 );
                 LogController::addSuccess(

@@ -118,25 +118,6 @@ class Credentials
         return $instance;
     }
 
-    /**
-     * Sets the private key file path and (if required) passphrase to be used with AuthMode::PUBLIC_KEY mode
-     *
-     * @param string $path
-     * @param string $passphrase (only if requried)
-     * @return self
-     * @throws Exception PrivateKey file does not exist!
-     */
-    public function setPrivateKey($path, $passphrase = null)
-    {
-        if (!file_exists($path)) {
-            throw new Exception("Private Key file does not exist");
-        }
-        $this->privateKey = $path;
-        $this->privateKeyPassphrase = $passphrase;
-
-        return $this;
-    }
-
     public static function withBoth($username, $password, $publicKey, $privateKey, $passphrase = null)
     {
         $instance = new self();
@@ -178,7 +159,7 @@ class Credentials
                 } else {
                     return true;
                 }
-            // no break
+                // no break
             case (AuthMode::PASSWORD):
                 return ssh2_auth_password($connectionResource, $this->username, $this->password);
             case (AuthMode::PUBLIC_KEY):
@@ -191,28 +172,139 @@ class Credentials
     }
 
     /**
-     * Checks if everything is set for authorization
+     * Sets the authorization mdoe
      *
-     * @return boolean Returns true on success
-     * @throws Exception Username not set!
-     * @throws Exception Mode not set!
-     * @throws Exception Password required for PASSWORD mode!
-     * @throws Exception Public Key required for PUBLIC KEY mode!
-     * @throws Exception Private Key required for PUBLIC KEY mode!
+     * @param int $mode Use AuthMode constants
+     * @todo use Enum
      */
-    protected function validate()
+    public function setMode($mode)
     {
-        if ($this->username === null) {
-            throw new Exception("Username not set!");
+        $this->mode = $mode;
+    }
+
+    /**
+     * Gets the assigned authorization mode
+     * @return int|null Use AuthMode constants
+     * @todo use Enum
+     */
+    public function getMode()
+    {
+        return $this->mode;
+    }
+
+    /**
+     * Sets the authorization username
+     *
+     * @param string $username
+     * @return self
+     * @throws Exception Username must be at least 1 character long!
+     */
+    public function setUsername($username)
+    {
+        if (strlen($username) < 1) {
+            throw new Exception("Username must be at least 1 character long!");
         }
+        $this->username = $username;
 
-        if (is_int($this->mode) === false) {
-            throw new Exception("Mode not set!");
+        return $this;
+    }
+
+    /**
+     * Gets the set authorization username
+     *
+     * @return string|null
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
+     * Sets the authorization password for the AuthMode::PASSWORD mode
+     *
+     * @param string $password
+     */
+    public function setPassword($password)
+    {
+        //technically it can be an empty string
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * Gets the assigned password
+     * @return string|null
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * Sets the public key file path to be used with AuthMode::PUBLIC_KEY mode
+     *
+     * @param string $path
+     * @return self
+     * @throws Exception Public Key file does not exist!
+     */
+    public function setPublicKey($path)
+    {
+        if (! file_exists($path)) {
+            throw new Exception("Public Key file does not exist!");
         }
+        $this->publicKey = $path;
 
-        $this->validateAgainstMode();
+        return $this;
+    }
 
-        return true;
+    /**
+     * Gets the public key file path
+     *
+     * @return string|null
+     */
+    public function getPublicKey()
+    {
+        return $this->publicKey;
+    }
+
+    /**
+     * Sets the private key file path and (if required) passphrase to be used with AuthMode::PUBLIC_KEY mode
+     *
+     * @param string $path
+     * @param string $passphrase (only if requried)
+     * @return self
+     * @throws Exception PrivateKey file does not exist!
+     */
+    public function setPrivateKey($path, $passphrase = null)
+    {
+        if (! file_exists($path)) {
+            throw new Exception("Private Key file does not exist");
+        }
+        $this->privateKey = $path;
+        $this->privateKeyPassphrase = $passphrase;
+
+        return $this;
+    }
+
+    /**
+     * Gets the private key file path
+     *
+     * @return string|null
+     */
+    public function getPrivateKeyPath()
+    {
+        return $this->privateKey;
+    }
+
+    /**
+     * Gets the private key passphrase
+     *
+     * @return string|null
+     */
+    public function getPrivateKeyPassphrase()
+    {
+        return $this->privateKeyPassphrase;
     }
 
     /**
@@ -255,119 +347,27 @@ class Credentials
     }
 
     /**
-     * Gets the assigned authorization mode
-     * @return int|null Use AuthMode constants
-     * @todo use Enum
-     */
-    public function getMode()
-    {
-        return $this->mode;
-    }
-
-    /**
-     * Sets the authorization mdoe
+     * Checks if everything is set for authorization
      *
-     * @param int $mode Use AuthMode constants
-     * @todo use Enum
+     * @return boolean Returns true on success
+     * @throws Exception Username not set!
+     * @throws Exception Mode not set!
+     * @throws Exception Password required for PASSWORD mode!
+     * @throws Exception Public Key required for PUBLIC KEY mode!
+     * @throws Exception Private Key required for PUBLIC KEY mode!
      */
-    public function setMode($mode)
+    protected function validate()
     {
-        $this->mode = $mode;
-    }
-
-    /**
-     * Gets the set authorization username
-     *
-     * @return string|null
-     */
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    /**
-     * Sets the authorization username
-     *
-     * @param string $username
-     * @return self
-     * @throws Exception Username must be at least 1 character long!
-     */
-    public function setUsername($username)
-    {
-        if (strlen($username) < 1) {
-            throw new Exception("Username must be at least 1 character long!");
+        if ($this->username === null) {
+            throw new Exception("Username not set!");
         }
-        $this->username = $username;
 
-        return $this;
-    }
-
-    /**
-     * Gets the assigned password
-     * @return string|null
-     */
-    public function getPassword()
-    {
-        return $this->password;
-    }
-
-    /**
-     * Sets the authorization password for the AuthMode::PASSWORD mode
-     *
-     * @param string $password
-     */
-    public function setPassword($password)
-    {
-        //technically it can be an empty string
-        $this->password = $password;
-
-        return $this;
-    }
-
-    /**
-     * Gets the public key file path
-     *
-     * @return string|null
-     */
-    public function getPublicKey()
-    {
-        return $this->publicKey;
-    }
-
-    /**
-     * Sets the public key file path to be used with AuthMode::PUBLIC_KEY mode
-     *
-     * @param string $path
-     * @return self
-     * @throws Exception Public Key file does not exist!
-     */
-    public function setPublicKey($path)
-    {
-        if (!file_exists($path)) {
-            throw new Exception("Public Key file does not exist!");
+        if (is_int($this->mode) === false) {
+            throw new Exception("Mode not set!");
         }
-        $this->publicKey = $path;
 
-        return $this;
-    }
+        $this->validateAgainstMode();
 
-    /**
-     * Gets the private key file path
-     *
-     * @return string|null
-     */
-    public function getPrivateKeyPath()
-    {
-        return $this->privateKey;
-    }
-
-    /**
-     * Gets the private key passphrase
-     *
-     * @return string|null
-     */
-    public function getPrivateKeyPassphrase()
-    {
-        return $this->privateKeyPassphrase;
+        return true;
     }
 }

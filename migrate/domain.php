@@ -36,7 +36,7 @@ foreach (DB::table('dns_manager2_zone')->get() as $item) {
             continue;
         }
         ConsoleNewLine('  Подлежит переносу-> да');
-        ConsoleNewLine(sprintf('  insert: domain->%s rel_id->%s rel_type->3 package_id->%s', $item->name, $item->relid, $package_domain));
+        ConsoleNewLine(sprintf('  insert: domain->%s rel_id->%s rel_type->3 package_id->%s', $item->name, $item->relid,  $package_domain));
         if ($db_create) {
             $domainPackage = DomainPackage::firstOrNew(['domain' => $item->name]);
             $domainPackage->rel_id = $item->relid;
@@ -62,7 +62,7 @@ foreach (DB::table('dns_manager2_zone')->get() as $item) {
             continue;
         }
         ConsoleNewLine('  Подлежит переносу-> да');
-        ConsoleNewLine(sprintf('  insert: domain->%s rel_id->%s rel_type->1 package_id->%s', $item->name, $item->relid, $package_service));
+        ConsoleNewLine(sprintf('  insert: domain->%s rel_id->%s rel_type->1 package_id->%s', $item->name, $item->relid,$package_service));
         if ($db_create) {
             $domainPackage = DomainPackage::firstOrNew(['domain' => $item->name]);
             $domainPackage->rel_id = $item->relid;

@@ -45,7 +45,7 @@ class AdminBackupPage implements PageInterface
             $settings->server_type = $_POST['server_type'];
             $settings->server_path = $_POST['server_path'];
             $settings->saveOrFail();
-            LogController::addSuccess(__CLASS__, 'сохранение изменений, adminid->' . $_SESSION['adminid']);
+            LogController::addSuccess(__CLASS__,'сохранение изменений, adminid->'.$_SESSION['adminid']);
         }
 
         if (!empty($settings)) {

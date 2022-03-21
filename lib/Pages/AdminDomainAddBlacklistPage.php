@@ -31,7 +31,7 @@ class AdminDomainAddBlacklistPage implements PageInterface
             $blackList = new BlackListModel();
             $blackList->domain = $_POST['domain'];
             $blackList->saveOrFail();
-            LogController::addSuccess(__CLASS__, 'добавление домена в blacklist, adminid->' . $_SESSION['adminid']);
+            LogController::addSuccess(__CLASS__,'добавление домена в blacklist, adminid->'.$_SESSION['adminid']);
             redir('module=DomainManager&action=blacklist', 'addonmodules.php');
         }
     }

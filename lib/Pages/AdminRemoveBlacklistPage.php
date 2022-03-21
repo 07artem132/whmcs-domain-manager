@@ -21,7 +21,7 @@ class AdminRemoveBlacklistPage implements PageInterface
     function __construct()
     {
         BlackListModel::findOrFail($_GET['id'])->delete();
-        LogController::addSuccess(__CLASS__, 'удаление домена из blacklist, adminid->' . $_SESSION['adminid']);
+        LogController::addSuccess(__CLASS__,'удаление домена из blacklist, adminid->'.$_SESSION['adminid']);
         redir('module=DomainManager&action=blacklist', 'addonmodules.php');
 
     }

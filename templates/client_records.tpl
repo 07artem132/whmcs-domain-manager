@@ -311,6 +311,16 @@
                                        name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][exchange]"
                                        value="{$content.1}" title="" placeholder=""
                                 >
+                            {elseif $recordData.type eq 'CAA'}
+                                {assign var="content" value=" "|explode:$record->content}
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][preference]"
+                                       value="{$content.0}" title="" placeholder=""
+                                >
+                                <input class="form-control table-input" type="text"
+                                       name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content][content]"
+                                       value="{$content.1} {$content.2|escape}" title="" placeholder=""
+                                >
                             {else}
                                 <input class="form-control table-input" type="text"
                                        name="record[{$smarty.foreach.recordData.index}][records][{$smarty.foreach.record.index}][content]"
@@ -475,6 +485,11 @@
                 $('#record_context_block').html('' +
                     '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[preference]" name="record_context[preference]" placeholder="{$LANG.DomainManager_preference}" value="">' +
                     '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[exchange]" name="record_context[exchange]" placeholder="{$LANG.DomainManager_exchange}" value="">');
+                break;
+            case 'CAA':
+                $('#record_context_block').html('' +
+                    '<input class="form-control" type="text" style="margin-bottom: 15px;" id="record_context[preference]" name="record_context[preference]" placeholder="{$LANG.DomainManager_preference}" value="">'+
+                    '<input class="form-control" type="text" id="record_context" name="record_context[context]" value="" placeholder="content">');
                 break;
             default:
                 $('#record_context_block').html('<input class="form-control" type="text" id="record_context" name="record_context" value="">');

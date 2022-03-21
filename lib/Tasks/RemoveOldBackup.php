@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Tasks;
 
-use Exception;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\TaskInterfaces;
@@ -21,8 +20,9 @@ use WHMCS\Module\Addon\DomainManager\vendor\SSHClient\SftpClient;
 
 class RemoveOldBackup implements TaskInterfaces
 {
-    public $name = 'remove old backup';
     private $frequency = '0 * * * *';
+
+    public $name = 'remove old backup';
 
     function __construct()
     {
@@ -59,8 +59,8 @@ class RemoveOldBackup implements TaskInterfaces
             if ($settings->limit_local_backup < $files->count()) {
                 $removeFiles = $files->take($files->count() - $settings->limit_local_backup);
                 foreach ($removeFiles as $removeFile) {
-                    if (!unlink(sprintf('%s/%s', ModuleConfig::geBackupPath(), $removeFile['name']))) {
-                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить старую резервную копию', new Exception('Не удалось удалить->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $removeFile['name'])));
+                    if(!unlink(sprintf('%s/%s', ModuleConfig::geBackupPath(), $removeFile['name']))){
+                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить старую резервную копию', new \Exception('Не удалось удалить->' . sprintf('%s/%s', ModuleConfig::geBackupPath(), $removeFile['name'])));
                         continue;
                     }
                     echo 'local remove->' . $removeFile['name'] . PHP_EOL;
@@ -77,7 +77,7 @@ class RemoveOldBackup implements TaskInterfaces
                         $ftp->connect($settings->server_ip, $settings->server_port);
                         $ftp->login($settings->server_login, $settings->server_password);
                         if (!$ftp->chdir($settings->server_path)) {
-                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new Exception('Не удалось сменить деректорию->' . $settings->server_path));
+                            LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new \Exception('Не удалось сменить деректорию->' .$settings->server_path));
                             return;
                         }
                         $files = collect($ftp->nlist())
@@ -91,14 +91,14 @@ class RemoveOldBackup implements TaskInterfaces
                         LogController::addError('Работа с резервными копиями по крону', 'При удалении старой резервной копии возникла ошибка', $e);
                         return;
                     } catch (FtpIsNotDirException $e) {
-                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new Exception('Не удалось сменить деректорию->' . $settings->server_path));
+                        LogController::addError('Работа с резервными копиями по крону', 'Не удалось сменить деректорию(ftp)', new \Exception('Не удалось сменить деректорию->' .$settings->server_path));
                         return;
                     }
                     if ($settings->limit_remote_backup < $files->count()) {
                         $removeFiles = $files->take($files->count() - $settings->limit_remote_backup);
                         foreach ($removeFiles as $removeFile) {
                             if (!$ftp->remove(sprintf('%s/%s', $settings->server_path, $removeFile['name']))) {
-                                LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить файл (ftp)', new Exception('Не удалось удалить файл->' . sprintf('%s/%s', $settings->server_path, $removeFile['name'])));
+                                LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить файл (ftp)', new \Exception('Не удалось удалить файл->' .sprintf('%s/%s', $settings->server_path, $removeFile['name'])));
                                 continue;
                             }
                             echo 'ftp remove->' . $removeFile['name'] . PHP_EOL;
@@ -119,7 +119,7 @@ class RemoveOldBackup implements TaskInterfaces
                                     'name' => $item
                                 ];
                             })->sortBy('last_edit');
-                    } catch (Exception $e) {
+                    } catch (\Exception $e) {
                         LogController::addError('Работа с резервными копиями по крону', 'При удалении старой резервной копии возникла ошибка (sftp)', $e);
                         return;
                     }
@@ -128,8 +128,8 @@ class RemoveOldBackup implements TaskInterfaces
                         foreach ($removeFiles as $removeFile) {
                             try {
                                 $sftp->remove(sprintf('%s/%s', $settings->server_path, $removeFile['name']));
-                            } catch (Exception $e) {
-                                LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить файл (sftp)', new Exception('Не удалось удалить файл->' . sprintf('%s/%s', $settings->server_path, $removeFile['name'])));
+                            } catch (\Exception $e) {
+                                LogController::addError('Работа с резервными копиями по крону', 'Не удалось удалить файл (sftp)', new \Exception('Не удалось удалить файл->' .sprintf('%s/%s', $settings->server_path, $removeFile['name'])));
                                 continue;
                             }
                             echo 'sftp remove->' . $removeFile['name'] . PHP_EOL;

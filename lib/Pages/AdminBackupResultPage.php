@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Throwable;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
@@ -22,7 +21,7 @@ class AdminBackupResultPage implements PageInterface
 
     /**
      * AdminBackupPage constructor.
-     * @throws Throwable
+     * @throws \Throwable
      */
     function __construct()
     {

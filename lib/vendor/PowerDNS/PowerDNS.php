@@ -448,7 +448,15 @@ class PowerDNS
     private function SendHttpRequest(string $Method, string $Url): stdClass
     {
         try {
-            $res = $this->pdns_client->{strtolower($Method)}($Url, $this->request_option);
+
+            $res = $this->pdns_client->{strtolower($Method)}($this->url.$Url, $this->request_option+[
+                    'timeout' => 2,
+                    'allow_redirects' => false,
+                    //'proxy' => '192.168.16.1:10'
+                    'headers' => [
+                        'X-API-Key' => $this->key
+                    ]
+                ]);
         } catch (RequestException $e) {
             $response = $e->getResponse();
             if (empty($response)) {

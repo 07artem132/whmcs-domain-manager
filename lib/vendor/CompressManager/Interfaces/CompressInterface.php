@@ -17,7 +17,7 @@ interface CompressInterface
      * @param string $mode
      * @throws Exception
      */
-    public function open(string $filename, string $mode = 'w');
+    public function open(string $filename, string $mode='w');
 
     /**
      * @param string $data
@@ -34,8 +34,8 @@ interface CompressInterface
 
     /**
      * @param string $str
-     * @return mixed
      * @throws Exception
+     * @return mixed
      */
     public function write(string $str);
 

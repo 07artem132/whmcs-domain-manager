@@ -2,8 +2,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Controllers;
 
-use Exception;
-use Smarty;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Configs\SmartyConfig;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
@@ -12,7 +10,7 @@ use WHMCS\View\Menu\MenuFactory;
 class PageController
 {
     /**
-     * @var Smarty
+     * @var \Smarty
      */
     private $view;
     /**
@@ -49,7 +47,7 @@ class PageController
     {
         global $customadminpath, $CONFIG;
 
-        $this->view = new Smarty();
+        $this->view = new \Smarty();
         $this->view->setTemplateDir(SmartyConfig::GetTemplateDir());
         $this->view->setCompileDir(SmartyConfig::GetCompileDir());
         $this->view->assign('_CONFIG', $CONFIG);
@@ -73,7 +71,6 @@ class PageController
     {
         $this->menu_template = $template;
     }
-
     public function setBreadcrumbTemplate($template)
     {
         $this->breadcrumb_template = $template;
@@ -108,7 +105,7 @@ class PageController
             $class = new $ClassNameFull($this);
 
             if (empty($class)) {
-                throw new Exception('Page not Found');
+                throw new \Exception('Page not Found');
             }
 
             foreach ($class->getVars() as $key => $var) {
@@ -129,7 +126,7 @@ class PageController
             }
 
             echo $this->view->fetch($class->getTemplateName());
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             echo $e->getMessage();
         }
     }
@@ -143,7 +140,6 @@ class PageController
     {
         echo $this->view->fetch($this->menu_template);
     }
-
     private function displayBreadcrumb()
     {
         echo $this->view->fetch($this->breadcrumb_template);

@@ -11,13 +11,12 @@ namespace WHMCS\Module\Addon\DomainManager\Models;
 
 use WHMCS\Model\AbstractModel;
 
-class LogModel extends AbstractModel
-{
-    public $incrementing = true;
-    protected $table = "mod_addon_domain_manager_log";
-    protected $primaryKey = 'id';
-    protected $fillable = [
-    ];
+class LogModel extends AbstractModel {
+	protected $table = "mod_addon_domain_manager_log";
+	protected $primaryKey = 'id';
+	public $incrementing = true;
+	protected $fillable = [
+	];
     protected $dates = [
         'created_at',
         'updated_at'

@@ -21,7 +21,7 @@
             </div>
             <div class="col-md-3">
                 <div>
-                    <select class="form-control" name="type" id="record_type" required>
+                    <select class="form-control" name="type" id="record_type" required >
                         <option disabled selected value="">Не выбрано</option>
                         <option value="txt">TXT</option>
                         <option value="ns">NS</option>
@@ -39,14 +39,12 @@
             </div>
             <div class="col-md-6">
                 <label class="info_text" for="record_type">Тип записи</label>
-            </div>
-            <div class="col-md-3 text-right title" style="height: 100px">
+            </div> <div class="col-md-3 text-right title" style="height: 100px">
                 <label for="record">Запись</label>
             </div>
             <div class="col-md-3" style="height: 100px">
                 <div>
-                    <textarea class="form-control" style="height: 95px;resize: none;" name="record" id="record"
-                              required></textarea>
+                    <textarea class="form-control" style="height: 95px;resize: none;" name="record" id="record" required></textarea>
                 </div>
             </div>
             <div class="col-md-6" style="height: 100px">

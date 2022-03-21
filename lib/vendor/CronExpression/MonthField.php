@@ -8,8 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\CronExpression;
 
-use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 
 /**
@@ -50,7 +48,7 @@ class MonthField extends AbstractField
     /**
      * @inheritDoc
      *
-     * @param DateTime|DateTimeImmutable &$date
+     * @param \DateTime|\DateTimeImmutable &$date
      */
     public function increment(DateTimeInterface &$date, $invert = false)
     {

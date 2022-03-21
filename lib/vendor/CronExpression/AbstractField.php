@@ -8,8 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\vendor\CronExpression;
 
-use OutOfRangeException;
-
 /**
  * Abstract CRON expression field
  */
@@ -67,6 +65,18 @@ abstract class AbstractField implements FieldInterface
     }
 
     /**
+     * Check if a value is a range
+     *
+     * @param string $value Value to test
+     *
+     * @return bool
+     */
+    public function isRange($value)
+    {
+        return strpos($value, '-') !== false;
+    }
+
+    /**
      * Check if a value is an increments of ranges
      *
      * @param string $value Value to test
@@ -76,6 +86,28 @@ abstract class AbstractField implements FieldInterface
     public function isIncrementsOfRanges($value)
     {
         return strpos($value, '/') !== false;
+    }
+
+    /**
+     * Test if a value is within a range
+     *
+     * @param string $dateValue Set date value
+     * @param string $value Value to test
+     *
+     * @return bool
+     */
+    public function isInRange($dateValue, $value)
+    {
+        $parts = array_map(function ($value) {
+            $value = trim($value);
+            $value = $this->convertLiterals($value);
+            return $value;
+        },
+            explode('-', $value, 2)
+        );
+
+
+        return $dateValue >= $parts[0] && $dateValue <= $parts[1];
     }
 
     /**
@@ -108,11 +140,11 @@ abstract class AbstractField implements FieldInterface
         $rangeEnd = isset($rangeChunks[1]) ? $rangeChunks[1] : $rangeStart;
 
         if ($rangeStart < $this->rangeStart || $rangeStart > $this->rangeEnd || $rangeStart > $rangeEnd) {
-            throw new OutOfRangeException('Invalid range start requested');
+            throw new \OutOfRangeException('Invalid range start requested');
         }
 
         if ($rangeEnd < $this->rangeStart || $rangeEnd > $this->rangeEnd || $rangeEnd < $rangeStart) {
-            throw new OutOfRangeException('Invalid range end requested');
+            throw new \OutOfRangeException('Invalid range end requested');
         }
 
         // Steps larger than the range need to wrap around and be handled slightly differently than smaller steps
@@ -123,58 +155,6 @@ abstract class AbstractField implements FieldInterface
         }
 
         return in_array($dateValue, $thisRange);
-    }
-
-    /**
-     * Check if a value is a range
-     *
-     * @param string $value Value to test
-     *
-     * @return bool
-     */
-    public function isRange($value)
-    {
-        return strpos($value, '-') !== false;
-    }
-
-    /**
-     * Test if a value is within a range
-     *
-     * @param string $dateValue Set date value
-     * @param string $value Value to test
-     *
-     * @return bool
-     */
-    public function isInRange($dateValue, $value)
-    {
-        $parts = array_map(function ($value) {
-            $value = trim($value);
-            $value = $this->convertLiterals($value);
-            return $value;
-        },
-            explode('-', $value, 2)
-        );
-
-
-        return $dateValue >= $parts[0] && $dateValue <= $parts[1];
-    }
-
-    /**
-     * Convert literal
-     *
-     * @param string $value
-     * @return string
-     */
-    protected function convertLiterals($value)
-    {
-        if (count($this->literals)) {
-            $key = array_search($value, $this->literals);
-            if ($key !== false) {
-                return (string)$key;
-            }
-        }
-
-        return $value;
     }
 
     /**
@@ -228,6 +208,24 @@ abstract class AbstractField implements FieldInterface
         }
 
         return $values;
+    }
+
+    /**
+     * Convert literal
+     *
+     * @param string $value
+     * @return string
+     */
+    protected function convertLiterals($value)
+    {
+        if (count($this->literals)) {
+            $key = array_search($value, $this->literals);
+            if ($key !== false) {
+                return (string)$key;
+            }
+        }
+
+        return $value;
     }
 
     /**

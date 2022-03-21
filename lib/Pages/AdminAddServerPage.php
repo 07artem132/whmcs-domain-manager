@@ -36,7 +36,7 @@ class AdminAddServerPage implements PageInterface
 
         if ($this->isRequestMethod('POST')) {
             try {
-                $pdns = new PowerDNS('http://' . $_POST['ip'] . ':' . $_POST['port'] . '/api/v1/', $_POST['token']);
+                $pdns = new PowerDNS('http://' . $_POST['ip'] .':'.$_POST['port']. '/api/v1/', $_POST['token']);
                 $pdns->DomainList();
                 $server = new ServerModel();
                 $server->name = $_POST['server_name'];

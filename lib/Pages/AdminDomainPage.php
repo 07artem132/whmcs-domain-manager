@@ -38,7 +38,7 @@ class AdminDomainPage implements PageInterface
                             $client_id = $domainPackage[$domain]->client_id;
                             $product_name = $domainPackage[$domain]->product_name;
                             $product_url = $domainPackage[$domain]->service_url;
-                        } catch (Throwable $e) {
+                        } catch (\Throwable $e) {
                             echo '<div class="alert alert-danger" style="margin-top: 10px" role="alert">domain-> ' . $domain . ' server ip ->' . $server->ip . ' error message->' . $e->getMessage() . '</div>';
                             $status = 'Нет информации';
                             $client_name = 'Нет информации';
@@ -68,7 +68,7 @@ class AdminDomainPage implements PageInterface
                 $this->vars['domainList'] = $this->vars['domainList']->merge($domains);
 
                 foreach ($domainPackage as $item) {
-                    $result = $this->vars['domainList']->first(function ($key, $domain) use ($item) {
+                    $result = $this->vars['domainList']->first(function ($domain) use ($item) {
                         return $domain['domain'] === $item->domain;
                     });
                     if (empty($result)) {

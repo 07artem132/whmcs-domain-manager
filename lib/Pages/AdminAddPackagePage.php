@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Throwable;
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
@@ -68,7 +67,7 @@ class AdminAddPackagePage implements PageInterface
                     $packageRelative->saveOrFail();
                 }
                 Capsule::commit();
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 Capsule::rollBack();
                 LogController::addError(__CLASS__, 'создание пакета с ошибкой, adminid->' . $_SESSION['adminid'], $e);
                 $this->vars['message'] = 'Возникла ошибка, детали в логе..';

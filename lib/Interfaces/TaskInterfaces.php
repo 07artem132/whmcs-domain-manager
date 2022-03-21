@@ -5,7 +5,6 @@
  *  Date time: 04.02.2020, 5:57
  *
  */
-
 namespace WHMCS\Module\Addon\DomainManager\Interfaces;
 
 

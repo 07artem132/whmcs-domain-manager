@@ -9,7 +9,6 @@
 namespace WHMCS\Module\Addon\DomainManager\vendor\CronExpression;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 use InvalidArgumentException;
 
@@ -60,7 +59,7 @@ class DayOfWeekField extends AbstractField
     /**
      * @inheritDoc
      *
-     * @param DateTime|DateTimeImmutable $date
+     * @param \DateTime|\DateTimeImmutable $date
      */
     public function isSatisfiedBy(DateTimeInterface $date, $value)
     {
@@ -160,7 +159,7 @@ class DayOfWeekField extends AbstractField
     /**
      * @inheritDoc
      *
-     * @param DateTime|DateTimeImmutable &$date
+     * @param \DateTime|\DateTimeImmutable &$date
      */
     public function increment(DateTimeInterface &$date, $invert = false)
     {

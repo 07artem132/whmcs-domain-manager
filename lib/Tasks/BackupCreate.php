@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Tasks;
 
-use Exception;
 use WHMCS\Module\Addon\DomainManager\Configs\ModuleConfig;
 use WHMCS\Module\Addon\DomainManager\Controllers\BackupController;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
@@ -19,8 +18,9 @@ use WHMCS\Module\Addon\DomainManager\vendor\CompressManager\Abstracts\CompressMe
 
 class BackupCreate implements TaskInterfaces
 {
-    public $name = 'create backup';
     private $frequency = '0 * * * *';
+
+    public $name = 'create backup';
 
     function __construct()
     {
@@ -47,7 +47,7 @@ class BackupCreate implements TaskInterfaces
         $fileName = 'all-domain-backup_' . date('Y-m-d H-i') . '.json';
 
         if (empty($compressMethod = CompressMethodAbstract::$enums[$settings->compress_backup])) {
-            LogController::addError('Работа с резервными копиями по крону', 'Резервная копия НЕ выполнена', new Exception('Неизвестный тип сжатия'));
+            LogController::addError('Работа с резервными копиями по крону', 'Резервная копия НЕ выполнена', new \Exception('Неизвестный тип сжатия'));
             return;
         }
         $server_error = 0;
@@ -58,8 +58,8 @@ class BackupCreate implements TaskInterfaces
             $compressManager->open(sprintf('%s/%s%s', ModuleConfig::geBackupPath(), $fileName, $compressManager->getFileExtension()));
             $compressManager->write($backup->create(null, $server_error));
             $compressManager->close();
-            echo 'create->' . $fileName . $compressManager->getFileExtension() . PHP_EOL;
-        } catch (Exception $e) {
+            echo 'create->' . $fileName .$compressManager->getFileExtension(). PHP_EOL;
+        } catch (\Exception $e) {
             LogController::addError('Работа с резервными копиями по крону', 'Резервная копия НЕ выполнена', $e);
             return;
         }
@@ -67,7 +67,7 @@ class BackupCreate implements TaskInterfaces
         if ($server_error === 0) {
             LogController::addSuccess('Работа с резервными копиями по крону', 'Резервная копия создана успешно');
         } else {
-            LogController::addError('Работа с резервными копиями по крону', 'Резервная копия выполнена частично', new Exception('Серверов с ошибками->' . $server_error));
+            LogController::addError('Работа с резервными копиями по крону', 'Резервная копия выполнена частично', new \Exception('Серверов с ошибками->' . $server_error));
             echo 'Серверов с ошибкой->' . $server_error . PHP_EOL;
         }
     }

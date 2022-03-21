@@ -9,9 +9,7 @@
 namespace WHMCS\Module\Addon\DomainManager\vendor\FTPClient\Exceptions;
 
 
-use Exception;
-
-class FtpIsNotDirException extends Exception
+class FtpIsNotDirException extends \Exception
 {
 
 }

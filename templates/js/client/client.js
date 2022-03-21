@@ -29,8 +29,16 @@ window.onload = function () {
     $('#form_add_zone').on('change', ':checkbox', function () {
         if ($("#create_root_record").prop('checked') || $("#create_www_record").prop('checked')) {
             $("#selected_ip").show();
+            if ($("select[name=ip]").val() === 'other') {
+                $("#custom_ip").show();
+                $("#custom_ip").removeAttr('disabled');
+            }
         } else {
             $("#selected_ip").hide();
+            if ($("select[name=ip]").val() === 'other') {
+                $("#custom_ip").hide();
+                $("#custom_ip").attr('disabled','disabled');
+            }
         }
     });
 

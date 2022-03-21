@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Exception;
 use Throwable;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
@@ -59,7 +58,7 @@ class AdminDeleteDomainPage implements PageInterface
                     'Не удалось удалить домен поскольку недоступны ' . $server_error . ' сервера из ' . ServerModel::count() . ' Ошибки:' . implode(',', $errorMessages) .
                     ', adminid->' . $_SESSION['adminid'] .
                     ', domain->' . $_GET['domain'],
-                    new Exception
+                    new \Exception
                 );
                 $this->vars['message'] = 'Не удалось удалить домен поскольку недоступны ' . $server_error . ' сервера из ' . ServerModel::count() . ' Ошибки:' . implode(',', $errorMessages);
                 $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=domain';

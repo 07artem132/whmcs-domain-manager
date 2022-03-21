@@ -9,7 +9,6 @@
 namespace WHMCS\Module\Addon\DomainManager\vendor\CronExpression;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 
 /**
@@ -41,6 +40,38 @@ class DayOfMonthField extends AbstractField
      * @inheritDoc
      */
     protected $rangeEnd = 31;
+
+    /**
+     * Get the nearest day of the week for a given day in a month
+     *
+     * @param int $currentYear Current year
+     * @param int $currentMonth Current month
+     * @param int $targetDay Target day of the month
+     *
+     * @return \DateTime Returns the nearest date
+     */
+    private static function getNearestWeekday($currentYear, $currentMonth, $targetDay)
+    {
+        $tday = str_pad($targetDay, 2, '0', STR_PAD_LEFT);
+        $target = DateTime::createFromFormat('Y-m-d', "$currentYear-$currentMonth-$tday");
+        $currentWeekday = (int)$target->format('N');
+
+        if ($currentWeekday < 6) {
+            return $target;
+        }
+
+        $lastDayOfMonth = $target->format('t');
+
+        foreach (array(-1, 1, -2, 2) as $i) {
+            $adjusted = $targetDay + $i;
+            if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
+                $target->setDate($currentYear, $currentMonth, $adjusted);
+                if ($target->format('N') < 6 && $target->format('m') == $currentMonth) {
+                    return $target;
+                }
+            }
+        }
+    }
 
     /**
      * @inheritDoc
@@ -75,41 +106,9 @@ class DayOfMonthField extends AbstractField
     }
 
     /**
-     * Get the nearest day of the week for a given day in a month
-     *
-     * @param int $currentYear Current year
-     * @param int $currentMonth Current month
-     * @param int $targetDay Target day of the month
-     *
-     * @return DateTime Returns the nearest date
-     */
-    private static function getNearestWeekday($currentYear, $currentMonth, $targetDay)
-    {
-        $tday = str_pad($targetDay, 2, '0', STR_PAD_LEFT);
-        $target = DateTime::createFromFormat('Y-m-d', "$currentYear-$currentMonth-$tday");
-        $currentWeekday = (int)$target->format('N');
-
-        if ($currentWeekday < 6) {
-            return $target;
-        }
-
-        $lastDayOfMonth = $target->format('t');
-
-        foreach (array(-1, 1, -2, 2) as $i) {
-            $adjusted = $targetDay + $i;
-            if ($adjusted > 0 && $adjusted <= $lastDayOfMonth) {
-                $target->setDate($currentYear, $currentMonth, $adjusted);
-                if ($target->format('N') < 6 && $target->format('m') == $currentMonth) {
-                    return $target;
-                }
-            }
-        }
-    }
-
-    /**
      * @inheritDoc
      *
-     * @param DateTime|DateTimeImmutable &$date
+     * @param \DateTime|\DateTimeImmutable &$date
      */
     public function increment(DateTimeInterface &$date, $invert = false)
     {

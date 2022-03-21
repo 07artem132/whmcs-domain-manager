@@ -8,7 +8,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Exception;
 use Throwable;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
@@ -38,7 +37,7 @@ class AdminDomainDeleteRecordPage implements PageInterface
                     ', adminid->' . $_SESSION['adminid'] .
                     ', record_name->' . $_GET['name'] .
                     ', record_type->' . $_GET['type'],
-                    new Exception()
+                    new \Exception()
                 );
                 $this->vars['message'] = 'Не удалось удалить из за того что нет совпадений';
                 $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=record_list&server_id=' . $_GET['server_id'] . '&domain=' . $_GET  ['domain'];

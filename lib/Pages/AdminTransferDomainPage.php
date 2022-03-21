@@ -8,12 +8,12 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Exception;
 use Illuminate\Database\Capsule\Manager;
 use WHMCS\Domain\Domain;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\DomainPackage;
+use WHMCS\Module\Addon\DomainManager\Models\PackageModel;
 use WHMCS\Module\Addon\DomainManager\Models\PackageRelative;
 use WHMCS\Module\Addon\DomainManager\Traits\IsRequestMethodTraits;
 use WHMCS\Service\Addon;
@@ -59,7 +59,7 @@ class AdminTransferDomainPage implements PageInterface
                     ', rel_type->' . $_POST['type'] .
                     ', rel_id->' . $_POST['rel_id'] .
                     ', domain->' . $_POST['domain'],
-                    new Exception()
+                    new \Exception()
                 );
                 $this->templateName = 'admin_custom_error.tpl';
                 $this->vars['message'] = 'К сожалению не удалось найти пакет который привязан к целевому продукту. Проверьте правельность указатия типа связи или id сервиса.';

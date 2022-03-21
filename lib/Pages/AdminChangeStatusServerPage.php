@@ -9,7 +9,6 @@
 
 namespace WHMCS\Module\Addon\DomainManager\Pages;
 
-use Exception;
 use WHMCS\Module\Addon\DomainManager\Controllers\LogController;
 use WHMCS\Module\Addon\DomainManager\Interfaces\PageInterface;
 use WHMCS\Module\Addon\DomainManager\Models\PackageModel;
@@ -37,7 +36,7 @@ class AdminChangeStatusServerPage implements PageInterface
                 __CLASS__,
                 'Неудачное изменения статуса сервера, нельзя отключить сервер пока он назначен пакету: ' . $package->title . ', adminid->' . $_SESSION['adminid'] .
                 ', server_id->' . $_GET['id'],
-                new Exception()
+                new \Exception()
             );
             $this->vars['message'] = 'Нельзя отключить сервер пока он назначен пакету: ' . $package->title;
             $this->vars['return_to'] = 'addonmodules.php?module=DomainManager&action=servers';

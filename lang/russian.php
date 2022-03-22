@@ -63,6 +63,7 @@ $_LANG['DomainManager_domain_not_found'] = 'Домен %s не найден';
 $_LANG['DomainManager_domain_already_created'] = 'Домен %s уже создан другим пользователем';
 $_LANG['DomainManager_domain_is_not_assigned_account'] = 'Невозможно удалить домен, так как он не привязан к аккаунту в whmcs';
 $_LANG['DomainManager_domain_blacklisted'] = 'Домен %s занесен в черный список администратором';
+$_LANG['DomainManager_domain_regex_no_valid'] = 'Домен %s не является валидным,свяжитесь с администратором';
 $_LANG['DomainManager_zone_regex_error'] = 'Возникла ошибка при выполнении регулярного выражения, свяжитесь с администратором';
 $_LANG['DomainManager_not_in_expected_format'] = 'Запись %s: не в ожидаемом формате (анализируется как \'%s\')';
 $_LANG['DomainManager_name_value_is_not_correct'] = 'Значение имени для одной из записей не корректно';

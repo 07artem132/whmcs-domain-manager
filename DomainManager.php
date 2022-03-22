@@ -292,8 +292,6 @@ function DomainManager_clientarea($vars)
                             $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
                             redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
                         } catch (PowerDnsClientException $e) {
-                            $error = json_decode($e->response);
-                            $error = pdnsTranslate($error->error);
                             LogController::addError(
                                 'Клиентская область',
                                 'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
@@ -301,6 +299,7 @@ function DomainManager_clientarea($vars)
                                 ', server_id->' . $server->id,
                                 $e
                             );
+                            $error = pdnsTranslate($e->response);
                             redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
                         }
                     }
@@ -336,8 +335,6 @@ function DomainManager_clientarea($vars)
                 $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
                 redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
             } catch (PowerDnsClientException $e) {
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
                 LogController::addError(
                     'Клиентская область',
                     'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
@@ -345,6 +342,7 @@ function DomainManager_clientarea($vars)
                     ', server_id->' . $server->id,
                     $e
                 );
+                $error = pdnsTranslate($e->response);
                 redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
             }
         } else {
@@ -372,8 +370,6 @@ function DomainManager_clientarea($vars)
                 $error = $_LANG['DomainManager_domain_edit_not_match_domain'];
                 redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
             } catch (PowerDnsClientException $e) {
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
                 LogController::addError(
                     'Клиентская область',
                     'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
@@ -381,6 +377,7 @@ function DomainManager_clientarea($vars)
                     ', server_id->' . $server->id,
                     $e
                 );
+                $error = pdnsTranslate($e->response);
                 redir("m=DomainManager&error=" . $error, "/");
             }
         }
@@ -457,8 +454,6 @@ function DomainManager_clientarea($vars)
                     ', client_id->' . $_SESSION['uid']
                 );
             } catch (PowerDnsClientException $e) {
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
                 LogController::addError(
                     'Клиентская область',
                     'Во время изменения зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
@@ -466,6 +461,7 @@ function DomainManager_clientarea($vars)
                     ', server_id->' . $server->id,
                     $e
                 );
+                $error = pdnsTranslate($e->response);
                 redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']) . "&error=" . $error, "/");
             }
             redir("m=DomainManager&api=edit&domain=" . strtolower($_GET['domain']), "/");
@@ -539,8 +535,14 @@ function DomainManager_clientarea($vars)
                 );
                 redir("m=DomainManager", "/");
             } catch (PowerDnsClientException $e) {
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
+                LogController::addError(
+                    'Клиентская область',
+                    'Во время удаления зоны ' . $_GET['domain'] . ' возникла ошибка,' .
+                    'client_id->' . $_SESSION['uid'] .
+                    ', server_id->' . $server->id,
+                    $e
+                );
+                $error = pdnsTranslate($e->response);
                 redir("m=DomainManager&error=" . $error, "/");
             } catch (ModelNotFoundException $e) {
                 $error = $_LANG['DomainManager_domain_is_not_assigned_account'];
@@ -555,6 +557,18 @@ function DomainManager_clientarea($vars)
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $result = preg_match('/^(?:[\p{L}\p{N}][\p{L}\p{N}\-_]*.)+[\p{L}\p{N}]{2,}$/', $_POST['zone_name'], $matches, PREG_OFFSET_CAPTURE, 0);
+        if ($result == false) {
+            $error = sprintf($_LANG['DomainManager_domain_regex_no_valid'], $_POST['zone_name']);
+            LogController::addError(
+                'Клиентская область',
+                $error .
+                ', client_id->' . $_SESSION['uid'],
+                new Exception()
+            );
+            redir("m=DomainManager&error=" . $error, "/");
+        }
+
         if (DomainPackage::where('domain', $_POST['zone_name'])->count() != 0) {
             $error = sprintf($_LANG['DomainManager_domain_already_created'], $_POST['zone_name']);
             LogController::addError(
@@ -621,6 +635,30 @@ function DomainManager_clientarea($vars)
                 $item .= '.';
             });
             try {
+                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
+                try {
+                    $pdns->DomainRecordList($_POST['zone_name'] . '.');
+                    $error = sprintf($_LANG['DomainManager_domain_already_created'], $_POST['zone_name']);
+                    LogController::addError(
+                        'Клиентская область',
+                        sprintf('Домен %s уже создан другим пользователем', $_POST['zone_name']) .
+                        ', client_id->' . $_SESSION['uid'],
+                        new Exception()
+                    );
+                    redir("m=DomainManager&error=" . $error, "/");
+                } catch (PowerDnsClientException $e) {
+                    if (strpos($e->response, 'Could not find domain') === false) {
+                        LogController::addError(
+                            'Клиентская область',
+                            'Во время создания зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
+                            'client_id->' . $_SESSION['uid'] .
+                            ', server_id->' . $server->id,
+                            $e
+                        );
+                        $error = pdnsTranslate($e->response);
+                        redir("m=DomainManager&error=" . $error, "/");
+                    }
+                }
                 $packageDomain->saveOrFail();
                 LogController::addSuccess(
                     'Клиентская область',
@@ -628,7 +666,6 @@ function DomainManager_clientarea($vars)
                     ', client_id->' . $_SESSION['uid']
                 );
 
-                $pdns = new PowerDNS('http://' . $server->ip . ':' . $server->port . '/api/v1/', $server->token);
                 $pdns->DomainCreate($_POST['zone_name'] . '.', 'Master', $canonical_ns);
                 if ($_POST['ip'] == 'other') {
                     $ip = $_POST['custom_ip'];
@@ -644,8 +681,7 @@ function DomainManager_clientarea($vars)
                     ', server_id->' . $server->id,
                     $e
                 );
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
+                $error = pdnsTranslate($e->response);
 
                 redir("m=DomainManager&error=" . $error, "/");
             }
@@ -687,8 +723,6 @@ function DomainManager_clientarea($vars)
                     ', client_id->' . $_SESSION['uid']
                 );
             } catch (PowerDnsClientException $e) {
-                $error = json_decode($e->response);
-                $error = pdnsTranslate($error->error);
                 LogController::addError(
                     'Клиентская область',
                     'Во время создания зоны ' . $_POST['zone_name'] . ' возникла ошибка,' .
@@ -696,6 +730,7 @@ function DomainManager_clientarea($vars)
                     ', server_id->' . $server->id,
                     $e
                 );
+                $error = pdnsTranslate($e->response);
                 redir("m=DomainManager&error=" . $error, "/");
             } catch (DomainEditNotMatchDomainFromUrlException $e) {
                 LogController::addError(
@@ -735,22 +770,23 @@ function DomainManager_clientarea($vars)
 }
 
 
-function pdnsTranslate(?string $error): string
+function pdnsTranslate(?string $response): string
 {
     global $_LANG;
+    try {
+        $error = json_decode($response, true, 512, JSON_THROW_ON_ERROR)['error'];
+    } catch (\Exception $e) {
+        $error = $response;
+    }
     switch (true) {
         case preg_match('/Could not find domain \'(.*)\'/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
             return sprintf($_LANG['DomainManager_domain_not_found'], $matches[1][0]);
-            break;
         case preg_match('/Domain \'(.*)\' already exists/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
             return sprintf($_LANG['DomainManager_domain_busy'], $matches[1][0]);
-            break;
         case preg_match('/Key \'name\' not present or not a String/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
             return sprintf($_LANG['DomainManager_name_value_is_not_correct']);
-            break;
         case preg_match('/Record (.*): Not in expected format \(parsed as \'(.*)\'\)/', $error, $matches, PREG_OFFSET_CAPTURE, 0):
             return sprintf($_LANG['DomainManager_not_in_expected_format'], $matches[1][0], $matches[2][0]);
-            break;
         case  null:
             return $_LANG['DomainManager_pdns_unknown_error'];
         default:
